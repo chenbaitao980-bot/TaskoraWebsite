@@ -2,9 +2,11 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import tailwindcss from '@tailwindcss/vite';
+import vercel from '@astrojs/vercel';
 
 export default defineConfig({
   site: 'https://taskora-website-eta.vercel.app',
+  adapter: vercel(),
   integrations: [
     starlight({
       title: 'Taskora',

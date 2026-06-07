@@ -51,7 +51,6 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
   <script>
     const SUPABASE_URL = 'https://wlehkvsxftyxmxelcaps.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_Nz2Ro_4jBthvDwjeQ8m-ww_tT0wYgcF';
-    const SUPABASE_ANON_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndsZWhrdnN4ZnR5eG14ZWxjYXBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODI2NjksImV4cCI6MjA5NTA1ODY2OX0.JHKcSAcx4xCXhe9x_uEtdXOdx2mllLxhGlyKS9idSGA';
 
     const loadingEl = document.getElementById('admin-loading')!;
     const contentEl = document.getElementById('admin-content')!;
@@ -130,19 +129,17 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       statusEl.classList.remove('hidden');
 
       try {
-        const uploadRes = await fetch(
-          `${SUPABASE_URL}/storage/v1/object/downloads/${filename}`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'apikey': SUPABASE_ANON_JWT,
-              'Content-Type': file.type || 'application/octet-stream',
-              'x-upsert': 'true',
-            },
-            body: file,
-          }
-        );
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('platform', platform);
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
 
         if (uploadRes.status === 401) {
           localStorage.removeItem('taskora_admin_token');
@@ -150,33 +147,16 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
           return;
         }
         if (!uploadRes.ok) {
-          const errText = await uploadRes.text();
-          throw new Error(`上传失败 (${uploadRes.status}): ${errText}`);
+          const errJson = await uploadRes.json().catch(() => ({ error: uploadRes.statusText }));
+          throw new Error(`上传失败 (${uploadRes.status}): ${errJson.error ?? uploadRes.statusText}`);
         }
 
-        const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/downloads/${filename}`;
+        const { url } = await uploadRes.json();
+        const uploadedFilename = url.split('/').pop() ?? filename;
 
-        const patchRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/download_links?platform=eq.${platform}`,
-          {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${token}`,
-              'Prefer': 'return=minimal',
-            },
-            body: JSON.stringify({ url: publicUrl }),
-          }
-        );
-
-        if (!patchRes.ok) {
-          throw new Error(`链接更新失败 (${patchRes.status})`);
-        }
-
-        statusEl.textContent = `✓ 已上传：${filename}`;
+        statusEl.textContent = `✓ 已上传：${uploadedFilename}`;
         statusEl.className = 'upload-status success';
-        currentEl.textContent = filename;
+        currentEl.textContent = uploadedFilename;
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         statusEl.textContent = `✗ 上传失败，请重试（${msg}）`;
