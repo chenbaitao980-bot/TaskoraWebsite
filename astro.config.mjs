@@ -4,7 +4,7 @@ import starlight from '@astrojs/starlight';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: 'https://taskora.vercel.app',
+  site: 'https://taskora-website-eta.vercel.app',
   integrations: [
     starlight({
       title: 'Taskora',
