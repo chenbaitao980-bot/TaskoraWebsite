@@ -1,0 +1,186 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+---
+
+<StarlightPage
+  frontmatter={{
+    title: '意见建议',
+    description: '告诉我们你的想法，帮助 Taskora 变得更好。',
+  }}
+>
+  <div class="feedback-container">
+    <p class="feedback-desc">你的每一条建议都很重要。无论是功能需求、Bug 反馈还是体验优化，我们都会认真阅读。</p>
+
+    <form id="feedback-form" class="feedback-form">
+      <div class="form-group">
+        <label for="nickname">昵称（可选）</label>
+        <input type="text" id="nickname" name="nickname" placeholder="你的昵称" />
+      </div>
+
+      <div class="form-group">
+        <label for="contact">联系方式（可选）</label>
+        <input type="text" id="contact" name="contact" placeholder="邮箱或微信，方便我们回复你" />
+      </div>
+
+      <div class="form-group">
+        <label for="category">建议类型</label>
+        <select id="category" name="category" required>
+          <option value="">请选择</option>
+          <option value="feature">功能建议</option>
+          <option value="bug">Bug 报告</option>
+          <option value="ux">体验优化</option>
+          <option value="other">其他</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="content">详细描述</label>
+        <textarea id="content" name="content" rows="6" placeholder="请详细描述你的建议或遇到的问题..." required></textarea>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn">提交建议</button>
+      <div id="feedback-result" class="feedback-result" style="display:none;"></div>
+    </form>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://wlehkvsxftyxmxelcaps.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_Nz2Ro_4jBthvDwjeQ8m-ww_tT0wYgcF';
+
+    document.getElementById('feedback-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target as HTMLFormElement;
+      const btn = document.getElementById('submit-btn') as HTMLButtonElement;
+      const result = document.getElementById('feedback-result')!;
+
+      const data = {
+        nickname: (form.elements.namedItem('nickname') as HTMLInputElement).value || null,
+        contact: (form.elements.namedItem('contact') as HTMLInputElement).value || null,
+        category: (form.elements.namedItem('category') as HTMLSelectElement).value,
+        content: (form.elements.namedItem('content') as HTMLTextAreaElement).value,
+      };
+
+      if (!data.category || !data.content) {
+        result.style.display = 'block';
+        result.className = 'feedback-result error';
+        result.textContent = '请填写建议类型和详细描述';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '提交中...';
+
+      try {
+        const resp = await fetch(`${SUPABASE_URL}/rest/v1/user_feedback`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify(data),
+        });
+
+        if (resp.ok || resp.status === 201) {
+          result.style.display = 'block';
+          result.className = 'feedback-result success';
+          result.textContent = '🎉 感谢你的建议！我们会认真阅读每一条反馈。';
+          form.reset();
+        } else {
+          throw new Error(`HTTP ${resp.status}`);
+        }
+      } catch (err) {
+        result.style.display = 'block';
+        result.className = 'feedback-result error';
+        result.textContent = '提交失败，请稍后再试。';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '提交建议';
+      }
+    });
+  </script>
+
+  <style>
+    .feedback-container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .feedback-desc {
+      color: var(--sl-color-gray-2);
+      margin-bottom: 2rem;
+    }
+    .feedback-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .form-group label {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 0.6rem 0.8rem;
+      border: 1px solid var(--sl-color-gray-5);
+      border-radius: 8px;
+      background: var(--sl-color-bg-nav);
+      color: var(--sl-color-text);
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+    .form-group textarea {
+      resize: vertical;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: 2px solid var(--sl-color-accent);
+      outline-offset: -1px;
+    }
+    .submit-btn {
+      padding: 0.75rem;
+      background: var(--sl-color-accent);
+      color: var(--sl-color-white);
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .submit-btn:hover {
+      opacity: 0.9;
+    }
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    .feedback-result {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+    .feedback-result.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .feedback-result.error {
+      background: #fbe9e7;
+      color: #c62828;
+    }
+    [data-theme='dark'] .feedback-result.success {
+      background: #1b3d20;
+      color: #66bb6a;
+    }
+    [data-theme='dark'] .feedback-result.error {
+      background: #3d1515;
+      color: #ef5350;
+    }
+  </style>
+</StarlightPage>

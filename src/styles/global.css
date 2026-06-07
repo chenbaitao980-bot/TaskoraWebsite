@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* Taskora 设计 token — 暖珊瑚主题 */
+@theme {
+  --color-primary: #C15F3C;
+  --color-primary-light: #D47A5A;
+  --color-primary-dark: #A84A2A;
+  --color-accent: #E8B89D;
+  --color-bg-scaffold: #F5F5F0;
+  --color-bg-card: #FFFFFF;
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #6B6B6B;
+  --color-text-hint: #9C9C9C;
+  --color-success: #2D9D5E;
+  --color-warning: #D4952E;
+  --color-error: #D13B3B;
+  --color-info: #4A8FC1;
+  --color-border-subtle: #E5E4DF;
+  --color-vip-gold: #FFAB00;
+  --color-vip-orange: #FF6D00;
+}
+
+/* Starlight 主题变量覆盖 */
+:root {
+  --sl-color-accent-low: #fef0ea;
+  --sl-color-accent: #C15F3C;
+  --sl-color-accent-high: #A84A2A;
+  --sl-font: 'Inter', system-ui, sans-serif;
+}
+
+[data-theme='dark'] {
+  --sl-color-accent-low: #2a1a14;
+  --sl-color-accent: #D47A5A;
+  --sl-color-accent-high: #E8B89D;
+}

@@ -1,0 +1,123 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+---
+
+<StarlightPage
+  frontmatter={{
+    title: '下载 Taskora',
+    description: '获取 Taskora 桌面端和移动端安装包。',
+    template: 'splash',
+    hero: {
+      tagline: '选择你的平台，开始高效任务管理',
+    },
+  }}
+>
+  <div class="download-grid">
+    <div class="download-card">
+      <div class="download-icon">📱</div>
+      <h3>Android</h3>
+      <p>Android 8.0 及以上</p>
+      <div class="download-links">
+        <a href="#" class="download-btn primary">下载 APK</a>
+        <a href="#" class="download-btn secondary">小米应用商店</a>
+      </div>
+      <p class="version-info">v1.0.0 · 25MB · 2026-06-05</p>
+    </div>
+
+    <div class="download-card">
+      <div class="download-icon">💻</div>
+      <h3>Windows</h3>
+      <p>Windows 10/11 (64-bit)</p>
+      <div class="download-links">
+        <a href="#" class="download-btn primary">下载 ZIP</a>
+      </div>
+      <p class="version-info">v1.0.0 · 45MB · 2026-06-05</p>
+    </div>
+
+    <div class="download-card">
+      <div class="download-icon">🌐</div>
+      <h3>Web 在线版</h3>
+      <p>无需安装，浏览器直接使用</p>
+      <div class="download-links">
+        <a href="#" class="download-btn primary">打开 Web 版</a>
+      </div>
+      <p class="version-info">始终最新版本</p>
+    </div>
+
+    <div class="download-card coming-soon">
+      <div class="download-icon">🍎</div>
+      <h3>iOS / macOS</h3>
+      <p>即将推出</p>
+      <div class="download-links">
+        <span class="download-btn disabled">敬请期待</span>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .download-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      max-width: 900px;
+      margin: 2rem auto;
+    }
+    .download-card {
+      background: var(--sl-color-bg-nav);
+      border: 1px solid var(--sl-color-gray-5);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+    }
+    .download-card.coming-soon {
+      opacity: 0.6;
+    }
+    .download-icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+    .download-card h3 {
+      margin: 0.5rem 0;
+      font-size: 1.25rem;
+    }
+    .download-card p {
+      color: var(--sl-color-gray-2);
+      margin: 0.25rem 0;
+    }
+    .download-links {
+      margin: 1rem 0 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .download-btn {
+      display: inline-block;
+      padding: 0.6rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .download-btn.primary {
+      background: var(--sl-color-accent);
+      color: var(--sl-color-white);
+    }
+    .download-btn.primary:hover {
+      opacity: 0.9;
+    }
+    .download-btn.secondary {
+      background: transparent;
+      border: 1px solid var(--sl-color-accent);
+      color: var(--sl-color-accent);
+    }
+    .download-btn.disabled {
+      background: var(--sl-color-gray-5);
+      color: var(--sl-color-gray-3);
+      cursor: default;
+    }
+    .version-info {
+      font-size: 0.75rem !important;
+      color: var(--sl-color-gray-3) !important;
+    }
+  </style>
+</StarlightPage>
