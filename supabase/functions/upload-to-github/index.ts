@@ -1,5 +1,3 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
 const GITHUB_TOKEN = Deno.env.get('GITHUB_TOKEN')!;
 const GITHUB_REPO = 'chenbaitao980-bot/TaskotaFront';
 

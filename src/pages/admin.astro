@@ -125,6 +125,13 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       const token = localStorage.getItem('taskora_admin_token');
       if (!token) { window.location.href = '/admin-login'; return; }
 
+      // Disable drop zone and file input during upload
+      const dropZone = document.querySelector(`[data-platform="${platform}"]`) as HTMLElement | null;
+      const type = platform === 'android_apk' ? 'apk' : 'zip';
+      const fileInput = document.getElementById(`file-input-${type}`) as HTMLInputElement | null;
+      if (dropZone) dropZone.classList.add('uploading');
+      if (fileInput) fileInput.disabled = true;
+
       statusEl.className = 'upload-status loading';
       statusEl.textContent = `上传中… (${(file.size / 1048576).toFixed(1)} MB)`;
       statusEl.classList.remove('hidden');
@@ -193,6 +200,10 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
         const msg = err instanceof Error ? err.message : String(err);
         statusEl.textContent = `✗ 上传失败，请重试（${msg}）`;
         statusEl.className = 'upload-status error';
+      } finally {
+        // Re-enable drop zone and file input after upload completes or fails
+        if (dropZone) dropZone.classList.remove('uploading');
+        if (fileInput) fileInput.disabled = false;
       }
     }
 
@@ -389,6 +400,11 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
     .drop-zone.dragover {
       border-color: var(--sl-color-accent);
       background: var(--sl-color-bg-sidebar);
+    }
+    .drop-zone.uploading {
+      pointer-events: none;
+      opacity: 0.6;
+      cursor: default;
     }
     .drop-zone-hint {
       font-size: 0.875rem;
