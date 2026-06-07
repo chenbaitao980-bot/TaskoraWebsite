@@ -63,7 +63,6 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
         const res = await fetch(`${SUPABASE_URL}/rest/v1/download_links?select=platform,url`, {
           headers: {
             'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           },
         });
         if (!res.ok) return;
