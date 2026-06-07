@@ -24,7 +24,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
         <input type="password" id="github-token-input" placeholder="github_pat_..." class="github-token-input" />
         <button type="button" id="github-token-save" class="token-save-btn">保存 Token</button>
       </div>
-      <p class="github-token-hint">需要 Fine-grained PAT，仓库 pbtcbt/taskora，权限：Contents: write</p>
+      <p class="github-token-hint">需要 Fine-grained PAT，仓库 chenbaitao980-bot/TaskotaFront，权限：Contents: write</p>
     </div>
 
     <form id="links-form" class="links-form">
@@ -160,7 +160,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
         statusEl.textContent = '检查 GitHub Release…';
         let releaseId: number;
         const releaseRes = await fetch(
-          'https://api.github.com/repos/pbtcbt/taskora/releases/tags/v-latest',
+          'https://api.github.com/repos/chenbaitao980-bot/TaskotaFront/releases/tags/v-latest',
           { headers: ghHeaders }
         );
 
@@ -177,7 +177,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
         } else if (releaseRes.status === 404) {
           // Create the release
           const createRes = await fetch(
-            'https://api.github.com/repos/pbtcbt/taskora/releases',
+            'https://api.github.com/repos/chenbaitao980-bot/TaskotaFront/releases',
             {
               method: 'POST',
               headers: { ...ghHeaders, 'Content-Type': 'application/json' },
@@ -208,7 +208,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 
         // Step 3: Delete existing asset with same filename (if any)
         const assetsRes = await fetch(
-          `https://api.github.com/repos/pbtcbt/taskora/releases/${releaseId}/assets`,
+          `https://api.github.com/repos/chenbaitao980-bot/TaskotaFront/releases/${releaseId}/assets`,
           { headers: ghHeaders }
         );
         if (assetsRes.ok) {
@@ -216,7 +216,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
           const existing = assets.find(a => a.name === filename);
           if (existing) {
             await fetch(
-              `https://api.github.com/repos/pbtcbt/taskora/releases/assets/${existing.id}`,
+              `https://api.github.com/repos/chenbaitao980-bot/TaskotaFront/releases/assets/${existing.id}`,
               { method: 'DELETE', headers: ghHeaders }
             );
           }
@@ -227,7 +227,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
         statusEl.textContent = `上传中… (${fileSizeMB} MB)`;
 
         const uploadRes = await fetch(
-          `https://uploads.github.com/repos/pbtcbt/taskora/releases/${releaseId}/assets?name=${encodeURIComponent(filename)}`,
+          `https://uploads.github.com/repos/chenbaitao980-bot/TaskotaFront/releases/${releaseId}/assets?name=${encodeURIComponent(filename)}`,
           {
             method: 'POST',
             headers: {
