@@ -1,10 +1,10 @@
-import { g as generateCspDigest, s as spreadAttributes, u as unescapeHTML, r as renderTemplate, a as removeBase, i as isRemotePath, A as AstroError, U as UnknownContentCollectionError, b as AstroUserError, d as defineMiddleware, c as sequence } from './chunks/sequence_FZRkLEU7.mjs';
+import { g as generateCspDigest, s as spreadAttributes, u as unescapeHTML, r as renderTemplate, a as removeBase, i as isRemotePath, A as AstroError, U as UnknownContentCollectionError, b as AstroUserError, d as defineMiddleware, c as sequence } from './chunks/sequence_Cdf-ucpZ.mjs';
 import 'piccolore';
 import 'clsx';
 import 'html-escaper';
 import { Traverse } from 'neotraverse/modern';
 import * as z from 'zod/v4';
-import { c as createComponent, V as VALID_INPUT_FORMATS } from './chunks/consts_DrwzZAMF.mjs';
+import { c as createComponent, V as VALID_INPUT_FORMATS } from './chunks/consts_1iM1NP_T.mjs';
 import * as devalue from 'devalue';
 import i18next from 'i18next';
 
@@ -99,7 +99,7 @@ class ImmutableDataStore {
    */
   static async fromModule() {
     try {
-      const data = await import('./chunks/_astro_data-layer-content_Bk8pDCbn.mjs');
+      const data = await import('./chunks/_astro_data-layer-content_DyEdb-ef.mjs');
       if (data.default instanceof Map) {
         return ImmutableDataStore.fromMap(data.default);
       }

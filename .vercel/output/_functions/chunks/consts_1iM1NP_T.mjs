@@ -1,4 +1,4 @@
-import { A as AstroError, bm as InvalidComponentArgs } from './sequence_FZRkLEU7.mjs';
+import { A as AstroError, bm as InvalidComponentArgs } from './sequence_Cdf-ucpZ.mjs';
 
 function validateArgs(args) {
   if (args.length !== 3) return false;
@@ -66,4 +66,4 @@ const DEFAULT_HASH_PROPS = [
   "background"
 ];
 
-export { DEFAULT_OUTPUT_FORMAT as D, VALID_INPUT_FORMATS as V, VALID_SUPPORTED_FORMATS as a, DEFAULT_HASH_PROPS as b, createComponent as c };
+export { DEFAULT_OUTPUT_FORMAT as D, VALID_INPUT_FORMATS as V, DEFAULT_HASH_PROPS as a, VALID_SUPPORTED_FORMATS as b, createComponent as c };

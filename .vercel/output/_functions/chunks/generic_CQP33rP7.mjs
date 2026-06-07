@@ -1,6 +1,6 @@
-import { A as AstroError, b5 as NoImageMetadata, b6 as FailedToFetchRemoteImageDimensions, b7 as RemoteImageNotAllowed, b8 as removeQueryString, aB as joinPaths, b9 as ExpectedImage, i as isRemotePath, ba as LocalImageUsedWrongly, bb as MissingImageDimension, bc as UnsupportedImageFormat, bd as IncompatibleDescriptorOptions, be as UnsupportedImageConversion, bf as InvalidImageService, bg as ExpectedImageOptions, bh as ExpectedNotESMImage, bi as ImageMissingAlt, C as maybeRenderHead, bj as addAttribute, s as spreadAttributes, r as renderTemplate, bk as FontFamilyNotFound, u as unescapeHTML, bl as MissingGetFontFileRequestUrl } from './sequence_FZRkLEU7.mjs';
-import { t as typeHandlers, a as types, i as isRemoteAllowed } from './entrypoint_BEXEyaGQ.mjs';
-import { D as DEFAULT_OUTPUT_FORMAT, a as VALID_SUPPORTED_FORMATS, b as DEFAULT_HASH_PROPS, c as createComponent } from './consts_DrwzZAMF.mjs';
+import { A as AstroError, b5 as NoImageMetadata, b6 as FailedToFetchRemoteImageDimensions, b7 as RemoteImageNotAllowed, b8 as removeQueryString, aB as joinPaths, b9 as ExpectedImage, i as isRemotePath, ba as LocalImageUsedWrongly, bb as MissingImageDimension, bc as UnsupportedImageFormat, bd as IncompatibleDescriptorOptions, be as UnsupportedImageConversion, bf as InvalidImageService, bg as ExpectedImageOptions, bh as ExpectedNotESMImage, bi as ImageMissingAlt, C as maybeRenderHead, bj as addAttribute, s as spreadAttributes, r as renderTemplate, bk as FontFamilyNotFound, u as unescapeHTML, bl as MissingGetFontFileRequestUrl } from './sequence_Cdf-ucpZ.mjs';
+import { t as typeHandlers, a as types, i as isRemoteAllowed } from './entrypoint_CeEMLiXM.mjs';
+import { D as DEFAULT_OUTPUT_FORMAT, a as DEFAULT_HASH_PROPS, b as VALID_SUPPORTED_FORMATS, c as createComponent } from './consts_1iM1NP_T.mjs';
 import 'clsx';
 import * as mime from 'mrmime';
 import 'piccolore';
@@ -349,13 +349,6 @@ function isLocalService(service) {
   }
   return "transform" in service;
 }
-function parseQuality(quality) {
-  let result = Number.parseInt(quality);
-  if (Number.isNaN(result)) {
-    return quality;
-  }
-  return result;
-}
 const sortNumeric = (a, b) => a - b;
 function verifyOptions(options) {
   if (!options.src || !isRemoteImage(options.src) && !isESMImportedImage(options.src)) {
@@ -409,6 +402,7 @@ function verifyOptions(options) {
   }
 }
 const baseService = {
+  propertiesToHash: DEFAULT_HASH_PROPS,
   validateOptions(options) {
     verifyOptions(options);
     if (!options.format) {
@@ -596,7 +590,7 @@ async function getConfiguredImageService() {
   if (!globalThis?.astroAsset?.imageService) {
     const { default: service } = await import(
       // @ts-expect-error
-      './sharp_DzVuuYRq.mjs'
+      './build-service_1dB3UXXm.mjs'
     ).catch((e) => {
       const error = new AstroError(InvalidImageService);
       error.cause = e;
@@ -970,7 +964,7 @@ new SsrRuntimeFontFileUrlResolver({
 								});
 
 const assetQueryParams = undefined;
-					const imageConfig = {"endpoint":{"route":"/_image"},"service":{"entrypoint":"astro/assets/services/sharp","config":{}},"dangerouslyProcessSVG":false,"domains":[],"remotePatterns":[],"responsiveStyles":false};
+					const imageConfig = {"endpoint":{"route":"/_image"},"service":{"entrypoint":"@astrojs/vercel/build-image-service","config":{"sizes":[640,750,828,1080,1200,1920,2048,3840],"domains":[],"remotePatterns":[]}},"dangerouslyProcessSVG":false,"domains":[],"remotePatterns":[],"responsiveStyles":false,"breakpoints":[640,750,828,1080,1200,1920,2048,3840]};
 					Object.defineProperty(imageConfig, 'assetQueryParams', {
 						value: assetQueryParams,
 						enumerable: false,
@@ -1079,4 +1073,4 @@ const generic___js = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProper
   page
 }, Symbol.toStringTag, { value: 'Module' }));
 
-export { baseService as b, detector as d, generic___js as g, parseQuality as p, resolveDefaultOutputFormat as r };
+export { baseService as b, generic___js as g, isESMImportedImage as i };
