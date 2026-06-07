@@ -18,7 +18,12 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
     <form id="links-form" class="links-form">
       <div class="link-card">
         <div class="link-label">📱 Android APK 直链</div>
-        <input type="url" id="field-android-apk" name="android_apk" placeholder="https://example.com/taskora.apk" />
+        <input type="file" id="file-input-apk" accept=".apk" class="hidden" />
+        <div id="drop-zone-apk" class="drop-zone" data-platform="android_apk" data-filename="taskora-latest.apk">
+          <div class="drop-zone-hint">拖拽文件到此处，或点击选择文件</div>
+          <div id="drop-zone-apk-current" class="drop-zone-current">暂无文件</div>
+        </div>
+        <div id="upload-status-apk" class="upload-status hidden"></div>
       </div>
       <div class="link-card">
         <div class="link-label">📱 小米应用商店链接</div>
@@ -26,7 +31,12 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       </div>
       <div class="link-card">
         <div class="link-label">💻 Windows ZIP 直链</div>
-        <input type="url" id="field-windows" name="windows_zip" placeholder="https://example.com/taskora-win.zip" />
+        <input type="file" id="file-input-zip" accept=".zip" class="hidden" />
+        <div id="drop-zone-zip" class="drop-zone" data-platform="windows_zip" data-filename="taskora-latest.zip">
+          <div class="drop-zone-hint">拖拽文件到此处，或点击选择文件</div>
+          <div id="drop-zone-zip-current" class="drop-zone-current">暂无文件</div>
+        </div>
+        <div id="upload-status-zip" class="upload-status hidden"></div>
       </div>
       <div class="link-card">
         <div class="link-label">🌐 Web 在线版网址</div>
@@ -70,19 +80,155 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       const linkMap: Record<string, string> = {};
       for (const row of rows) linkMap[row.platform] = row.url ?? '';
 
-      const fieldMap: Record<string, string> = {
-        'field-android-apk': 'android_apk',
+      // URL input fields (xiaomi + web)
+      const urlFieldMap: Record<string, string> = {
         'field-android-xiaomi': 'android_xiaomi',
-        'field-windows': 'windows_zip',
         'field-web': 'web',
       };
-      for (const [elId, platform] of Object.entries(fieldMap)) {
+      for (const [elId, platform] of Object.entries(urlFieldMap)) {
         const el = document.getElementById(elId) as HTMLInputElement | null;
         if (el) el.value = linkMap[platform] ?? '';
       }
 
+      // Upload zone current file display (apk + zip)
+      const apkUrl = linkMap['android_apk'] ?? '';
+      const zipUrl = linkMap['windows_zip'] ?? '';
+
+      const apkCurrentEl = document.getElementById('drop-zone-apk-current');
+      const zipCurrentEl = document.getElementById('drop-zone-zip-current');
+
+      if (apkCurrentEl) {
+        apkCurrentEl.textContent = apkUrl ? getFilenameFromUrl(apkUrl) : '暂无文件';
+      }
+      if (zipCurrentEl) {
+        zipCurrentEl.textContent = zipUrl ? getFilenameFromUrl(zipUrl) : '暂无文件';
+      }
+
       loadingEl.classList.add('hidden');
       contentEl.classList.remove('hidden');
+
+      setupUploadZone('apk');
+      setupUploadZone('zip');
+    }
+
+    function getFilenameFromUrl(url: string): string {
+      try {
+        const parts = url.split('/');
+        return parts[parts.length - 1] || url;
+      } catch {
+        return url;
+      }
+    }
+
+    async function uploadFile(file: File, platform: string, filename: string, statusEl: HTMLElement, currentEl: HTMLElement) {
+      const token = localStorage.getItem('taskora_admin_token');
+      if (!token) { window.location.href = '/admin-login'; return; }
+
+      statusEl.textContent = '上传中…';
+      statusEl.className = 'upload-status loading';
+      statusEl.classList.remove('hidden');
+
+      try {
+        const uploadRes = await fetch(
+          `${SUPABASE_URL}/storage/v1/object/downloads/${filename}`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'apikey': SUPABASE_ANON_KEY,
+              'Content-Type': file.type || 'application/octet-stream',
+              'x-upsert': 'true',
+            },
+            body: file,
+          }
+        );
+
+        if (uploadRes.status === 401) {
+          localStorage.removeItem('taskora_admin_token');
+          window.location.href = '/admin-login';
+          return;
+        }
+        if (!uploadRes.ok) {
+          const errText = await uploadRes.text();
+          throw new Error(`上传失败 (${uploadRes.status}): ${errText}`);
+        }
+
+        const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/downloads/${filename}`;
+
+        const patchRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/download_links?platform=eq.${platform}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${token}`,
+              'Prefer': 'return=minimal',
+            },
+            body: JSON.stringify({ url: publicUrl }),
+          }
+        );
+
+        if (!patchRes.ok) {
+          throw new Error(`链接更新失败 (${patchRes.status})`);
+        }
+
+        statusEl.textContent = `✓ 已上传：${filename}`;
+        statusEl.className = 'upload-status success';
+        currentEl.textContent = filename;
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        statusEl.textContent = `✗ 上传失败，请重试（${msg}）`;
+        statusEl.className = 'upload-status error';
+      }
+    }
+
+    function setupUploadZone(type: 'apk' | 'zip') {
+      const dropZone = document.getElementById(`drop-zone-${type}`) as HTMLDivElement | null;
+      const fileInput = document.getElementById(`file-input-${type}`) as HTMLInputElement | null;
+      const statusEl = document.getElementById(`upload-status-${type}`) as HTMLElement | null;
+      const currentEl = document.getElementById(`drop-zone-${type}-current`) as HTMLElement | null;
+
+      if (!dropZone || !fileInput || !statusEl || !currentEl) return;
+
+      const platform = dropZone.dataset.platform!;
+      const filename = dropZone.dataset.filename!;
+
+      // Click to open file picker
+      dropZone.addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      // File input change
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files?.[0];
+        if (file) {
+          uploadFile(file, platform, filename, statusEl, currentEl);
+          fileInput.value = '';
+        }
+      });
+
+      // Drag events
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragleave', (e) => {
+        // Only remove highlight if leaving the drop zone entirely
+        if (!dropZone.contains(e.relatedTarget as Node)) {
+          dropZone.classList.remove('dragover');
+        }
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) {
+          uploadFile(file, platform, filename, statusEl, currentEl);
+        }
+      });
     }
 
     document.getElementById('logout-btn')?.addEventListener('click', () => {
@@ -101,10 +247,9 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       btn.textContent = '保存中…';
       resultEl.classList.add('hidden');
 
+      // Only save xiaomi + web URL fields (APK/ZIP are uploaded independently)
       const fieldMap: Record<string, string> = {
-        'field-android-apk': 'android_apk',
         'field-android-xiaomi': 'android_xiaomi',
-        'field-windows': 'windows_zip',
         'field-web': 'web',
       };
 
@@ -123,6 +268,11 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
             `${SUPABASE_URL}/rest/v1/download_links?platform=eq.${platform}`,
             { method: 'PATCH', headers, body: JSON.stringify({ url }) }
           );
+          if (res.status === 401) {
+            localStorage.removeItem('taskora_admin_token');
+            window.location.href = '/admin-login';
+            return false;
+          }
           return res.ok;
         })
       );
@@ -193,7 +343,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       font-weight: 600;
       color: var(--sl-color-text);
     }
-    .link-card input {
+    .link-card input[type="url"] {
       padding: 0.55rem 0.85rem;
       border: 1px solid var(--sl-color-gray-5);
       border-radius: 8px;
@@ -203,10 +353,47 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       width: 100%;
       box-sizing: border-box;
     }
-    .link-card input:focus {
+    .link-card input[type="url"]:focus {
       outline: 2px solid var(--sl-color-accent);
       outline-offset: 1px;
     }
+    .drop-zone {
+      border: 2px dashed var(--sl-color-gray-5);
+      border-radius: 8px;
+      padding: 1.25rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      background: var(--sl-color-bg);
+      transition: border-color 0.15s, background 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .drop-zone:hover {
+      border-color: var(--sl-color-accent);
+      background: var(--sl-color-bg-sidebar);
+    }
+    .drop-zone.dragover {
+      border-color: var(--sl-color-accent);
+      background: var(--sl-color-bg-sidebar);
+    }
+    .drop-zone-hint {
+      font-size: 0.875rem;
+      color: var(--sl-color-gray-2);
+    }
+    .drop-zone-current {
+      font-size: 0.8rem;
+      color: var(--sl-color-gray-3);
+    }
+    .upload-status {
+      font-size: 0.875rem;
+      padding: 0.35rem 0;
+    }
+    .upload-status.loading {
+      color: var(--sl-color-gray-2);
+    }
+    .upload-status.success { color: #2D9D5E; }
+    .upload-status.error { color: #D13B3B; }
     .save-btn {
       padding: 0.7rem 2rem;
       border: none;
@@ -231,7 +418,12 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
     .hidden { display: none; }
     [data-theme='dark'] .save-result.success { color: #4ADE80; }
     [data-theme='dark'] .save-result.error { color: #F87171; }
-    [data-theme='dark'] .link-card input {
+    [data-theme='dark'] .upload-status.success { color: #4ADE80; }
+    [data-theme='dark'] .upload-status.error { color: #F87171; }
+    [data-theme='dark'] .link-card input[type="url"] {
+      border-color: var(--sl-color-gray-4);
+    }
+    [data-theme='dark'] .drop-zone {
       border-color: var(--sl-color-gray-4);
     }
   </style>
