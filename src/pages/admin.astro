@@ -130,34 +130,77 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       statusEl.classList.remove('hidden');
 
       try {
-        // Upload directly to Supabase Storage (admin JWT satisfies RLS authenticated policy)
-        const uploadRes = await fetch(
-          `${SUPABASE_URL}/storage/v1/object/downloads/${filename}`,
+        // Step 1: Initiate TUS resumable upload
+        const contentType = file.type || 'application/octet-stream';
+        const initRes = await fetch(
+          `${SUPABASE_URL}/storage/v1/upload/resumable`,
           {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
               'apikey': SUPABASE_ANON_JWT,
-              'Content-Type': file.type || 'application/octet-stream',
+              'Tus-Resumable': '1.0.0',
+              'Upload-Length': String(file.size),
+              'Upload-Metadata': [
+                `bucketName ${btoa('downloads')}`,
+                `objectName ${btoa(filename)}`,
+                `contentType ${btoa(contentType)}`,
+                `cacheControl ${btoa('3600')}`,
+              ].join(','),
               'x-upsert': 'true',
             },
-            body: file,
           }
         );
 
-        if (uploadRes.status === 401) {
+        if (initRes.status === 401) {
           localStorage.removeItem('taskora_admin_token');
           window.location.href = '/admin-login';
           return;
         }
-        if (!uploadRes.ok) {
-          const errText = await uploadRes.text();
-          throw new Error(`上传失败 (${uploadRes.status}): ${errText}`);
+        if (initRes.status !== 201) {
+          const errText = await initRes.text();
+          throw new Error(`上传初始化失败 (${initRes.status}): ${errText}`);
+        }
+
+        const location = initRes.headers.get('Location');
+        if (!location) {
+          throw new Error('上传初始化失败：未收到 Location 响应头');
+        }
+
+        // Build full upload URL (Location may be relative or absolute)
+        const uploadUrl = location.startsWith('http') ? location : `${SUPABASE_URL}${location}`;
+
+        // Update status with file size info
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        statusEl.textContent = `上传中… (${fileSizeMB} MB)`;
+
+        // Step 2: Upload file data via TUS PATCH
+        const dataRes = await fetch(uploadUrl, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'apikey': SUPABASE_ANON_JWT,
+            'Tus-Resumable': '1.0.0',
+            'Content-Type': 'application/offset+octet-stream',
+            'Content-Length': String(file.size),
+            'Upload-Offset': '0',
+          },
+          body: file,
+        });
+
+        if (dataRes.status === 401) {
+          localStorage.removeItem('taskora_admin_token');
+          window.location.href = '/admin-login';
+          return;
+        }
+        if (dataRes.status !== 204) {
+          const errText = await dataRes.text();
+          throw new Error(`上传失败 (${dataRes.status}): ${errText}`);
         }
 
         const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/downloads/${filename}`;
 
-        // Update download_links table (Pattern 4)
+        // Step 3: Update download_links table (Pattern 4)
         const patchRes = await fetch(
           `${SUPABASE_URL}/rest/v1/download_links?platform=eq.${platform}`,
           {
