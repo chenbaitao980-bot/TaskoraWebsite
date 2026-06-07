@@ -1,51 +1,33 @@
 # Type Safety
 
-> Type safety patterns in this project.
+## TypeScript Usage
 
----
+TypeScript is used inside `<script>` blocks in `.astro` files. There are no separate `.ts` type files.
 
-## Overview
+### DOM type assertions (real patterns from the codebase)
 
-<!--
-Document your project's type safety conventions here.
+```ts
+const form = e.target as HTMLFormElement;
+const btn = document.getElementById('submit-btn') as HTMLButtonElement;
+const result = document.getElementById('feedback-result')!;
+const input = form.elements.namedItem('nickname') as HTMLInputElement;
+```
 
-Questions to answer:
-- What type system do you use?
-- How are types organized?
-- What validation library do you use?
-- How do you handle type inference?
--->
+Pattern: use `as HTMLXxxElement` for typed DOM access; use `!` only when the element is guaranteed present (rendered in the same `.astro` file).
 
-(To be filled by the team)
+## Content Collection Types
 
----
+Astro content collections use `docsSchema()` from `@astrojs/starlight/schema` — no custom schema definitions needed for standard doc pages.
 
-## Type Organization
+See: [`src/content.config.ts`](../../../src/content.config.ts)
 
-<!-- Where types are defined, shared types vs local types -->
+## Rules
 
-(To be filled by the team)
+- Prefer explicit type assertions over `any`
+- Do not use `any` unless there is no alternative
+- Do not create a dedicated `types/` directory unless there are 3+ shared type definitions
+- Astro frontmatter types are inferred — no manual typing needed for `.md`/`.mdx` frontmatter
 
----
+## tsconfig
 
-## Validation
-
-<!-- Runtime validation patterns (Zod, Yup, io-ts, etc.) -->
-
-(To be filled by the team)
-
----
-
-## Common Patterns
-
-<!-- Type utilities, generics, type guards -->
-
-(To be filled by the team)
-
----
-
-## Forbidden Patterns
-
-<!-- any, type assertions, etc. -->
-
-(To be filled by the team)
+Standard Astro tsconfig (strict mode). See [`tsconfig.json`](../../../tsconfig.json).

@@ -1,51 +1,39 @@
 # Quality Guidelines
 
-> Code quality standards for frontend development.
+## Build Verification
 
----
+The only required quality gate is: **`npm run build` must pass with zero errors**.
 
-## Overview
+- Starlight build catches broken sidebar slugs, missing content, and type errors
+- Run locally before pushing: `npm run build`
+- Vercel CI also runs `npm run build` on every push
 
-<!--
-Document your project's quality standards here.
+## Sidebar Slug Rule (learned from a deploy failure)
 
-Questions to answer:
-- What patterns are forbidden?
-- What linting rules do you enforce?
-- What are your testing requirements?
-- What code review standards apply?
--->
+Every slug referenced in `astro.config.mjs` sidebar must have a matching content file:
 
-(To be filled by the team)
+```
+slug: 'docs/getting-started'  →  src/content/docs/docs/getting-started.md  ✅
+slug: 'docs/nonexistent'      →  (no file)                                   ❌ build fails
+```
 
----
+When adding a sidebar entry, create the corresponding `.md` file first.
 
-## Forbidden Patterns
+## CSS Quality
 
-<!-- Patterns that should never be used and why -->
+- Always include `[data-theme='dark']` overrides when hardcoding light-mode colors in `<style>` blocks
+- Use Starlight CSS variables (`var(--sl-color-*)`) instead of hardcoded hex where possible
+- Test visual output at both light and dark themes
 
-(To be filled by the team)
+## Content Quality
 
----
+- All doc pages must have `title` and `description` in frontmatter
+- Chinese copy — maintain consistent tone (friendly, direct, no formal 您)
 
-## Required Patterns
+## No Testing Requirements
 
-<!-- Patterns that must always be used -->
+This is a static marketing/docs site. There are no unit or integration tests. `npm run build` is the test.
 
-(To be filled by the team)
+## Linting
 
----
-
-## Testing Requirements
-
-<!-- What level of testing is expected -->
-
-(To be filled by the team)
-
----
-
-## Code Review Checklist
-
-<!-- What reviewers should check -->
-
-(To be filled by the team)
+No ESLint config is present. Astro's TypeScript checker (via `astro check` or build) is the linter.

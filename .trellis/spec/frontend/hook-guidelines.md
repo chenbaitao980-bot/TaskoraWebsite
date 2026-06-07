@@ -1,51 +1,30 @@
 # Hook Guidelines
 
-> How hooks are used in this project.
+> This project has no React hooks. It is a static Astro site with vanilla JS/TS in `<script>` blocks.
 
----
+## Interactivity Pattern
 
-## Overview
+All client-side interaction uses vanilla DOM in `<script>` blocks inside `.astro` files:
 
-<!--
-Document your project's hook conventions here.
+```astro
+<script>
+  document.getElementById('my-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    // ...
+  });
+</script>
+```
 
-Questions to answer:
-- What custom hooks do you have?
-- How do you handle data fetching?
-- What are the naming conventions?
-- How do you share stateful logic?
--->
+Real example: [`src/pages/feedback.astro:46-101`](../../../src/pages/feedback.astro)
 
-(To be filled by the team)
+## Rules
 
----
+- Use `?.` optional chaining when querying DOM elements that may not exist
+- Use `as HTMLFormElement`, `as HTMLInputElement` etc. for type assertions on DOM queries
+- Use `!` non-null assertion only when the element is guaranteed to exist (e.g., rendered in the same file)
+- Keep scripts simple — no external state libraries, no reactive frameworks
+- If logic is > ~50 lines, consider splitting into a `src/scripts/` utility file (none exist yet, but that's where they'd go)
 
-## Custom Hook Patterns
+## No Custom Hooks
 
-<!-- How to create and structure custom hooks -->
-
-(To be filled by the team)
-
----
-
-## Data Fetching
-
-<!-- How data fetching is handled (React Query, SWR, etc.) -->
-
-(To be filled by the team)
-
----
-
-## Naming Conventions
-
-<!-- Hook naming rules (use*, etc.) -->
-
-(To be filled by the team)
-
----
-
-## Common Mistakes
-
-<!-- Hook-related mistakes your team has made -->
-
-(To be filled by the team)
+There are no custom hook files in this project. Do not create `useXxx` patterns.

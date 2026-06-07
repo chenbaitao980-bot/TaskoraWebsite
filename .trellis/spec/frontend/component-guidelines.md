@@ -1,59 +1,60 @@
 # Component Guidelines
 
-> How components are built in this project.
+> This is a Starlight static site. "Components" are Astro pages, not React components.
 
+## Page Structure
+
+Every custom page (non-doc) follows this pattern:
+
+```astro
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 ---
 
-## Overview
+<StarlightPage
+  frontmatter={{
+    title: '页面标题',
+    description: '页面描述',
+    // optional: template: 'splash', hero: { ... }
+  }}
+>
+  <!-- page content -->
 
-<!--
-Document your project's component conventions here.
+  <script>
+    // TypeScript for interactivity (if needed)
+  </script>
 
-Questions to answer:
-- What component patterns do you use?
-- How are props defined?
-- How do you handle composition?
-- What accessibility standards apply?
--->
+  <style>
+    /* Scoped CSS (if needed) */
+  </style>
+</StarlightPage>
+```
 
-(To be filled by the team)
-
----
-
-## Component Structure
-
-<!-- Standard structure of a component file -->
-
-(To be filled by the team)
-
----
-
-## Props Conventions
-
-<!-- How props should be defined and typed -->
-
-(To be filled by the team)
-
----
+Real example: [`src/pages/feedback.astro`](../../../src/pages/feedback.astro)
 
 ## Styling Patterns
 
-<!-- How styles are applied (CSS modules, styled-components, Tailwind, etc.) -->
+- **Scoped `<style>` blocks** inside each `.astro` file — no external CSS files per page
+- Use **Starlight CSS variables** for colors/theming: `var(--sl-color-accent)`, `var(--sl-color-gray-2)`, `var(--sl-color-bg-nav)`, `var(--sl-color-text)`
+- Border radius convention: `8px` for inputs/buttons, `16px` for cards
+- Include `[data-theme='dark']` overrides for dark mode where colors are hardcoded
+- Tailwind utility classes may be used for layout; design tokens are in `global.css` via `@theme {}`
 
-(To be filled by the team)
+## Markdown Doc Pages
 
+Doc content (`.md` / `.mdx`) uses Starlight frontmatter:
+
+```md
 ---
-
-## Accessibility
-
-<!-- A11y requirements and patterns -->
-
-(To be filled by the team)
-
+title: 页面标题
+description: 一句话描述
 ---
+```
 
-## Common Mistakes
+For the homepage (`index.mdx`), use the `splash` template with `hero` config.
 
-<!-- Component-related mistakes your team has made -->
+## Anti-Patterns
 
-(To be filled by the team)
+- Do NOT create a separate `.astro` component file unless a UI element is reused across 3+ pages
+- Do NOT import external UI component libraries (no shadcn, no Radix, etc.)
+- Do NOT use inline `style=""` attributes — use the `<style>` block
