@@ -9,7 +9,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
   }}
 >
   <div id="admin-loading" class="status-msg">验证登录状态…</div>
-  <div id="admin-content" style="display:none;">
+  <div id="admin-content" class="hidden">
     <div class="admin-header">
       <p class="admin-hint">修改链接后点击「保存」立即生效，无需重新部署。</p>
       <button id="logout-btn" class="logout-btn">退出登录</button>
@@ -34,7 +34,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       </div>
 
       <button type="submit" class="save-btn" id="save-btn">保存所有链接</button>
-      <div id="save-result" class="save-result" style="display:none;"></div>
+      <div id="save-result" class="save-result hidden"></div>
     </form>
   </div>
 
@@ -81,8 +81,8 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
         if (el) el.value = linkMap[platform] ?? '';
       }
 
-      loadingEl.style.display = 'none';
-      contentEl.style.display = 'block';
+      loadingEl.classList.add('hidden');
+      contentEl.classList.remove('hidden');
     }
 
     document.getElementById('logout-btn')?.addEventListener('click', () => {
@@ -99,7 +99,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       const resultEl = document.getElementById('save-result')!;
       btn.disabled = true;
       btn.textContent = '保存中…';
-      resultEl.style.display = 'none';
+      resultEl.classList.add('hidden');
 
       const fieldMap: Record<string, string> = {
         'field-android-apk': 'android_apk',
@@ -137,7 +137,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
         resultEl.textContent = '部分保存失败，请重试（token 可能已过期，尝试重新登录）';
         resultEl.className = 'save-result error';
       }
-      resultEl.style.display = 'block';
+      resultEl.classList.remove('hidden');
     });
   </script>
 
@@ -228,6 +228,9 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
     }
     .save-result.success { color: #2D9D5E; }
     .save-result.error { color: #D13B3B; }
+    .hidden { display: none; }
+    [data-theme='dark'] .save-result.success { color: #4ADE80; }
+    [data-theme='dark'] .save-result.error { color: #F87171; }
     [data-theme='dark'] .link-card input {
       border-color: var(--sl-color-gray-4);
     }
