@@ -2,16 +2,16 @@
 
 ## Goal
 
-将管理员界面的 Android APK 和 Windows ZIP 下载链接管理，从"手动输入 URL"改为"点击选择本地文件 / 拖拽上传"，文件存储于 Supabase Storage，上传后 URL 自动写入 `download_links` 表。小米商店链接和 Web URL 保留原有输入框。
+将管理员界面的 Android APK 和 Windows ZIP 下载链接管理，从"手动输入 URL"改为"点击选择本地文件 / 拖拽上传"。文件直传 Cloudflare R2（通过 Worker 生成 presigned URL），上传后 R2 public URL 自动写入 `download_links` 表。小米商店链接和 Web URL 保留原有输入框。
 
 ## Requirements
 
 * Android APK 字段：替换为拖拽 / 点击上传区域（accept=".apk"）
 * Windows ZIP 字段：替换为拖拽 / 点击上传区域（accept=".zip"）
 * 小米应用商店链接 / Web 在线版 URL：保留 URL 输入框，不变
-* 文件上传到 Supabase Storage `downloads` bucket（public bucket）
+* 文件上传到 Cloudflare R2 `taskora-downloads` bucket（public bucket）
 * 固定文件名：`taskora-latest.apk` 和 `taskora-latest.zip`（每次上传覆盖，URL 不变）
-* 上传后自动 PATCH `download_links` 表（复用现有 Pattern 4）
+* 上传后自动 PATCH `download_links` 表
 * 上传期间显示进度 / loading 状态，上传成功显示文件名
 * 上传失败显示明确错误信息
 * 完全遵守现有 spec：vanilla DOM + `<script>`，无 React/Vue，无状态库
@@ -37,29 +37,74 @@
 
 ## Technical Approach
 
+### Architecture
+
+```
+浏览器 → Worker(GET presigned URL) → 浏览器直传 R2(PUT, 绕过Worker body限制) → 更新 download_links
+```
+
+* Worker 只返回 presigned URL（不传 body），不受 Cloudflare Workers 免费版 10 MB body 限制
+* 浏览器用 presigned URL 直传 R2，支持任意大小文件（R2 限制 5 GB/文件）
+* R2 bucket `taskora-downloads` 设为 Public，下载 URL 无需签名
+
 ### Storage
 
-* Supabase Storage bucket 名：`downloads`，设置为 **Public bucket**
-* Public URL 格式：`${SUPABASE_URL}/storage/v1/object/public/downloads/taskora-latest.apk`
-* RLS policy：`INSERT/UPDATE` 需要 `auth.role() = 'authenticated'`（用已有 admin JWT）
+* Cloudflare R2 bucket 名：`taskora-downloads`，设置为 **Public bucket**
+* Public URL 格式：`https://pub-{hash}.r2.dev/taskora-latest.apk`（bucket public 域名）
+* 固定文件名：`taskora-latest.apk` 和 `taskora-latest.zip`（每次上传覆盖）
 
-### Upload API（client-side，无需 API route）
+### Cloudflare Worker（`github-upload`）
+
+改造为 presigned URL 生成器：
 
 ```ts
-// PUT 覆盖上传（upsert=true 避免已存在报错）
-await fetch(
-  `${SUPABASE_URL}/storage/v1/object/downloads/taskora-latest.apk`,
-  {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'apikey': SUPABASE_ANON_KEY,
-      'Content-Type': 'application/octet-stream',
-      'x-upsert': 'true',       // 覆盖已存在文件
-    },
-    body: file,                 // File object from input/drop
-  }
+// Worker 代码 - 只返回 presigned PUT URL
+const key = filename; // taskora-latest.apk 或 taskora-latest.zip
+const expiresIn = 600; // 10 分钟
+
+const url = new URL(`https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${env.R2_BUCKET_NAME}/${key}`);
+const date = new Date();
+const dateStr = date.toISOString().replace(/[:-]|\.\d{3}/g, '');
+
+const stringToSign = `PUT\n\n\n${dateStr}\n/${env.R2_BUCKET_NAME}/${key}`;
+const signature = await crypto.subtle.sign(
+  'HMAC',
+  await crypto.subtle.importKey('raw', new TextEncoder().encode(env.R2_SECRET_KEY), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']),
+  new TextEncoder().encode(stringToSign)
 );
+
+const presignedUrl = `${url.pathname}?${url.searchParams}&Signature=${encodeURIComponent(btoa(String.fromCharCode(...new Uint8Array(signature))))}&Expires=${Math.floor(date.getTime() / 1000) + expiresIn}`;
+```
+
+Worker 环境变量：
+* `R2_ACCOUNT_ID` — Cloudflare Account ID
+* `R2_BUCKET_NAME` — R2 bucket 名（`taskora-downloads`）
+* `R2_SECRET_KEY` — R2 API Token 的 Secret Key
+* `GITHUB_TOKEN` — 保留（不再使用，可移除）
+
+### Upload Flow（admin.astro）
+
+```ts
+// Step 1: 从 Worker 获取 presigned URL
+const presignedRes = await fetch(
+  `https://github-upload.chenbaitao980.workers.dev/?filename=taskora-latest.apk`
+);
+const { url: presignedUrl } = await presignedRes.json();
+
+// Step 2: 浏览器直传 R2（PUT，无 body 限制）
+await fetch(presignedUrl, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/octet-stream' },
+  body: file,
+});
+
+// Step 3: 更新 download_links
+const publicUrl = `https://pub-{hash}.r2.dev/taskora-latest.apk`;
+await fetch(`${SUPABASE_URL}/rest/v1/download_links?platform=eq.android_apk`, {
+  method: 'PATCH',
+  headers: { ... },
+  body: JSON.stringify({ url: publicUrl }),
+});
 ```
 
 ### UI 变更（admin.astro）
@@ -70,25 +115,15 @@ await fetch(
   * 上传后显示文件名 + 成功状态
 * 小米 / Web 的 `.link-card` 完全不变
 * "保存所有链接"按钮：仅处理小米 + Web URL，APK/ZIP 字段各自独立上传
-
-### 上传后写入 URL（复用 Pattern 4）
-
-```ts
-const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/downloads/taskora-latest.apk`;
-await fetch(`${SUPABASE_URL}/rest/v1/download_links?platform=eq.android_apk`, {
-  method: 'PATCH',
-  headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=minimal' },
-  body: JSON.stringify({ url: publicUrl }),
-});
-```
+* 移除 GitHub Token 配置区（不再需要）
 
 ## Decision (ADR-lite)
 
-**Context**: 需要为管理员提供文件上传能力，同时维持 Astro 静态站 + vanilla DOM 架构。
+**Context**: 需要为管理员提供文件上传能力（100+ MB APK/ZIP），同时维持 Astro 静态站 + vanilla DOM 架构。Cloudflare Workers 免费版有 10 MB body 限制。
 
-**Decision**: 客户端直传 Supabase Storage（无 API route 中间层），固定文件名覆盖，public bucket。
+**Decision**: Worker 只生成 presigned URL，浏览器直传 R2。绕过 Worker body 限制，无需付费升级。
 
-**Consequences**: 实现最简，URL 稳定，下载页无需任何改动。存储限额 1GB 对应用包大小完全够用。无版本历史（已明确 Out of Scope）。
+**Consequences**: 实现最简（Worker 几乎不改），URL 稳定，下载页无需改动。R2 免费 10 GB 存储 + 无出口费，完全够用。
 
 ## Out of Scope
 
@@ -100,9 +135,12 @@ await fetch(`${SUPABASE_URL}/rest/v1/download_links?platform=eq.android_apk`, {
 ## Technical Notes
 
 * 主文件：`src/pages/admin.astro`
-* Supabase 项目：`wlehkvsxftyxmxelcaps.supabase.co`
-* **前置步骤**（需在 Supabase Dashboard 手动完成）：
-  1. Storage → New bucket → 名称 `downloads`，勾选 Public
-  2. Storage → Policies → 为 `downloads` bucket 添加 INSERT policy：`auth.role() = 'authenticated'`
-* `x-upsert: true` header 是 Supabase Storage 覆盖上传的正确方式
+* Worker 文件：Cloudflare Dashboard 在线编辑（`github-upload`）
+* R2 bucket：`taskora-downloads`，Public 访问
+* Supabase 项目：`wlehkvsxftyxmxelcaps.supabase.co`（仅用于 download_links 表）
 * 上传文件名固定：APK → `taskora-latest.apk`，ZIP → `taskora-latest.zip`
+* **前置步骤**（需在 Cloudflare Dashboard 手动完成）：
+  1. R2 → Overview → Create bucket → 名称 `taskora-downloads`
+  2. R2 → Settings → Enable public access via r2.dev（或绑定自定义域名）
+  3. R2 → Manage R2 API Tokens → 创建 Token（Object Read & Write 权限）
+  4. Workers → `github-upload` → Settings → Variables → 添加 `R2_ACCOUNT_ID`、`R2_BUCKET_NAME`、`R2_SECRET_KEY`

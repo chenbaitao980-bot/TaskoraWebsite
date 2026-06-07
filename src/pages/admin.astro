@@ -15,18 +15,6 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       <button id="logout-btn" class="logout-btn">退出登录</button>
     </div>
 
-    <div class="github-settings">
-      <div class="github-settings-header">
-        <span>🔑 GitHub Token 配置</span>
-        <span id="github-token-status" class="token-status"></span>
-      </div>
-      <div class="github-settings-body">
-        <input type="password" id="github-token-input" placeholder="github_pat_..." class="github-token-input" />
-        <button type="button" id="github-token-save" class="token-save-btn">保存 Token</button>
-      </div>
-      <p class="github-token-hint">需要 Fine-grained PAT，仓库 chenbaitao980-bot/TaskoraWebsite，权限：Contents: write</p>
-    </div>
-
     <form id="links-form" class="links-form">
       <div class="link-card">
         <div class="link-label">📱 Android APK 直链</div>
@@ -122,9 +110,6 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 
       setupUploadZone('apk');
       setupUploadZone('zip');
-
-      // GitHub token status
-      updateGithubTokenStatus();
     }
 
     function getFilenameFromUrl(url: string): string {
@@ -144,114 +129,33 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       statusEl.classList.remove('hidden');
 
       try {
-        // Step 1: Get GitHub token from localStorage
-        const githubToken = localStorage.getItem('taskora_github_token');
-        if (!githubToken) {
-          throw new Error('请先在上方设置 GitHub Token');
-        }
-
-        const ghHeaders = {
-          'Authorization': `Bearer ${githubToken}`,
-          'Accept': 'application/vnd.github+json',
-          'X-GitHub-Api-Version': '2022-11-28',
-        };
-
-        // Step 2: Get or create the "v-latest" release
-        statusEl.textContent = '检查 GitHub Release…';
-        let releaseId: number;
-        const releaseRes = await fetch(
-          'https://api.github.com/repos/chenbaitao980-bot/TaskoraWebsite/releases/tags/v-latest',
-          { headers: ghHeaders }
+        // Step 1: Get presigned URL from Worker
+        statusEl.textContent = '获取上传凭证…';
+        const presignedRes = await fetch(
+          `https://github-upload.chenbaitao980.workers.dev/?filename=${encodeURIComponent(filename)}`
         );
-
-        if (releaseRes.status === 401) {
-          throw new Error('GitHub Token 无效或已过期');
+        if (!presignedRes.ok) {
+          const errBody = await presignedRes.text();
+          throw new Error(`获取上传凭证失败 (${presignedRes.status}): ${errBody}`);
         }
-        if (releaseRes.status === 403) {
-          throw new Error('GitHub Token 权限不足（需要 Contents: write）');
-        }
+        const { url: presignedUrl, publicUrl } = await presignedRes.json() as { url?: string; publicUrl?: string };
+        if (!presignedUrl) throw new Error('Worker 未返回 presigned URL');
 
-        if (releaseRes.ok) {
-          const releaseData = await releaseRes.json();
-          releaseId = releaseData.id;
-        } else if (releaseRes.status === 404) {
-          // Create the release
-          const createRes = await fetch(
-            'https://api.github.com/repos/chenbaitao980-bot/TaskoraWebsite/releases',
-            {
-              method: 'POST',
-              headers: { ...ghHeaders, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                tag_name: 'v-latest',
-                name: 'Latest Release',
-                draft: false,
-                prerelease: false,
-              }),
-            }
-          );
-          if (createRes.status === 401) {
-            throw new Error('GitHub Token 无效或已过期');
-          }
-          if (createRes.status === 403) {
-            throw new Error('GitHub Token 权限不足（需要 Contents: write）');
-          }
-          if (!createRes.ok) {
-            const body = await createRes.text();
-            throw new Error(`GitHub 上传失败 (${createRes.status}): ${body}`);
-          }
-          const createData = await createRes.json();
-          releaseId = createData.id;
-        } else {
-          const body = await releaseRes.text();
-          throw new Error(`GitHub 上传失败 (${releaseRes.status}): ${body}`);
-        }
-
-        // Step 3: Delete existing asset with same filename (if any)
-        const assetsRes = await fetch(
-          `https://api.github.com/repos/chenbaitao980-bot/TaskoraWebsite/releases/${releaseId}/assets`,
-          { headers: ghHeaders }
-        );
-        if (assetsRes.ok) {
-          const assets: { id: number; name: string }[] = await assetsRes.json();
-          const existing = assets.find(a => a.name === filename);
-          if (existing) {
-            await fetch(
-              `https://api.github.com/repos/chenbaitao980-bot/TaskoraWebsite/releases/assets/${existing.id}`,
-              { method: 'DELETE', headers: ghHeaders }
-            );
-          }
-        }
-
-        // Step 4: Upload new asset
+        // Step 2: Upload directly to R2
         const fileSizeMB = (file.size / 1048576).toFixed(1);
         statusEl.textContent = `上传中… (${fileSizeMB} MB)`;
 
-        const uploadRes = await fetch(
-          `https://github-upload.chenbaitao980.workers.dev/?releaseId=${releaseId}&filename=${encodeURIComponent(filename)}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/octet-stream',
-            },
-            body: file,
-          }
-        );
-
-        if (uploadRes.status === 401) {
-          throw new Error('GitHub Token 无效或已过期');
-        }
-        if (uploadRes.status === 403) {
-          throw new Error('GitHub Token 权限不足（需要 Contents: write）');
-        }
+        const uploadRes = await fetch(presignedUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/octet-stream' },
+          body: file,
+        });
         if (!uploadRes.ok) {
-          const body = await uploadRes.text();
-          throw new Error(`GitHub 上传失败 (${uploadRes.status}): ${body}`);
+          throw new Error(`R2 上传失败 (${uploadRes.status})`);
         }
 
-        const uploadData = await uploadRes.json();
-        const browserDownloadUrl: string = uploadData.browser_download_url;
-
-        // Step 5: Update download_links table
+        // Step 3: Update download_links with R2 public URL
+        const resolvedPublicUrl = publicUrl || presignedUrl.split('?')[0];
         const patchRes = await fetch(
           `${SUPABASE_URL}/rest/v1/download_links?platform=eq.${platform}`,
           {
@@ -262,10 +166,9 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
               'Authorization': `Bearer ${token}`,
               'Prefer': 'return=minimal',
             },
-            body: JSON.stringify({ url: browserDownloadUrl }),
+            body: JSON.stringify({ url: resolvedPublicUrl }),
           }
         );
-
         if (patchRes.status === 401) {
           localStorage.removeItem('taskora_admin_token');
           window.location.href = '/admin-login';
@@ -285,30 +188,6 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       }
     }
 
-    function updateGithubTokenStatus() {
-      const statusEl = document.getElementById('github-token-status');
-      if (!statusEl) return;
-      const stored = localStorage.getItem('taskora_github_token');
-      if (stored) {
-        statusEl.textContent = '✓ Token 已设置';
-        statusEl.style.color = '#2D9D5E';
-      } else {
-        statusEl.textContent = '⚠ 未设置';
-        statusEl.style.color = '#D13B3B';
-      }
-    }
-
-    document.getElementById('github-token-save')?.addEventListener('click', () => {
-      const input = document.getElementById('github-token-input') as HTMLInputElement | null;
-      if (!input) return;
-      const val = input.value.trim();
-      if (val) {
-        localStorage.setItem('taskora_github_token', val);
-        input.value = '';
-        updateGithubTokenStatus();
-      }
-    });
-
     function setupUploadZone(type: 'apk' | 'zip') {
       const dropZone = document.getElementById(`drop-zone-${type}`) as HTMLDivElement | null;
       const fileInput = document.getElementById(`file-input-${type}`) as HTMLInputElement | null;
@@ -319,17 +198,35 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 
       const platform = dropZone.dataset.platform!;
       const filename = dropZone.dataset.filename!;
+      const expectedExt = type === 'apk' ? '.apk' : '.zip';
+      let uploading = false;
+
+      function validateAndUpload(file: File) {
+        if (uploading) return;
+        if (!file.name.toLowerCase().endsWith(expectedExt)) {
+          statusEl.textContent = `✗ 请选择 ${expectedExt} 文件`;
+          statusEl.className = 'upload-status error';
+          statusEl.classList.remove('hidden');
+          return;
+        }
+        uploading = true;
+        dropZone.classList.add('disabled');
+        uploadFile(file, platform, filename, statusEl, currentEl).finally(() => {
+          uploading = false;
+          dropZone.classList.remove('disabled');
+        });
+      }
 
       // Click to open file picker
       dropZone.addEventListener('click', () => {
-        fileInput.click();
+        if (!uploading) fileInput.click();
       });
 
       // File input change
       fileInput.addEventListener('change', () => {
         const file = fileInput.files?.[0];
         if (file) {
-          uploadFile(file, platform, filename, statusEl, currentEl);
+          validateAndUpload(file);
           fileInput.value = '';
         }
       });
@@ -337,7 +234,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       // Drag events
       dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
-        dropZone.classList.add('dragover');
+        if (!uploading) dropZone.classList.add('dragover');
       });
 
       dropZone.addEventListener('dragleave', (e) => {
@@ -352,7 +249,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
         dropZone.classList.remove('dragover');
         const file = e.dataTransfer?.files?.[0];
         if (file) {
-          uploadFile(file, platform, filename, statusEl, currentEl);
+          validateAndUpload(file);
         }
       });
     }
@@ -503,6 +400,11 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       border-color: var(--sl-color-accent);
       background: var(--sl-color-bg-sidebar);
     }
+    .drop-zone.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
     .drop-zone-hint {
       font-size: 0.875rem;
       color: var(--sl-color-gray-2);
@@ -541,52 +443,6 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
     }
     .save-result.success { color: #2D9D5E; }
     .save-result.error { color: #D13B3B; }
-    .github-settings {
-      background: var(--sl-color-bg-sidebar);
-      border: 1px solid var(--sl-color-gray-5);
-      border-radius: 8px;
-      padding: 1rem 1.25rem;
-      margin-bottom: 1.5rem;
-    }
-    .github-settings-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-weight: 600;
-      margin-bottom: 0.75rem;
-    }
-    .token-status { font-size: 0.85rem; font-weight: normal; }
-    .github-settings-body {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-    .github-token-input {
-      flex: 1;
-      padding: 0.4rem 0.75rem;
-      border: 1px solid var(--sl-color-gray-5);
-      border-radius: 6px;
-      font-size: 0.875rem;
-      background: var(--sl-color-bg);
-      color: var(--sl-color-text);
-      font-family: monospace;
-    }
-    .token-save-btn {
-      padding: 0.4rem 1rem;
-      background: var(--sl-color-accent);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.875rem;
-      white-space: nowrap;
-    }
-    .github-token-hint {
-      font-size: 0.78rem;
-      color: var(--sl-color-gray-3);
-      margin-top: 0.5rem;
-      margin-bottom: 0;
-    }
     .hidden { display: none; }
     [data-theme='dark'] .save-result.success { color: #4ADE80; }
     [data-theme='dark'] .save-result.error { color: #F87171; }
