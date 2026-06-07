@@ -41,3 +41,41 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 2: Admin file upload via Supabase Edge Function
+
+**Date**: 2026-06-07
+**Task**: Admin file upload via Supabase Edge Function
+**Branch**: `main`
+
+### Summary
+
+Implemented admin drag-and-drop file upload for APK/ZIP. Tried GitHub Releases direct (CORS blocked), then pivoted to Supabase Edge Function as server-side proxy. Edge Function calls GitHub Releases API with secret GITHUB_TOKEN, bypassing CORS. Fixed Vercel pre-built output issue (.vercel/output removed from git). Fixed download page 403 caused by using non-JWT publishable key as Bearer token. All acceptance criteria met; spec updated with integration patterns.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `36b896c` | (see git log) |
+| `fd1e0a4` | (see git log) |
+| `66b03b6` | (see git log) |
+| `2fa613f` | (see git log) |
+| `f855607` | (see git log) |
+| `3f48439` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
