@@ -6,7 +6,7 @@ import vercel from '@astrojs/vercel';
 
 export default defineConfig({
   site: 'https://taskora-website-eta.vercel.app',
-  adapter: vercel(),
+  adapter: vercel({ imageService: true }),
   integrations: [
     starlight({
       title: 'Taskora',
