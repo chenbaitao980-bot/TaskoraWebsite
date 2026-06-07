@@ -1,5 +1,5 @@
-import { i as isESMImportedImage, b as baseService } from './generic_BYmsu_hB.mjs';
-import './entrypoint_B65D_Wlo.mjs';
+import { i as isESMImportedImage, b as baseService } from './generic_CzVxmnYp.mjs';
+import './entrypoint_BFzYlD2n.mjs';
 
 const qualityTable = {
   low: 25,
