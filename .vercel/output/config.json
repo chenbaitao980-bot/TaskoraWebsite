@@ -20,7 +20,7 @@
 			"dest": "_render"
 		},
 		{
-			"src": "^/api/upload/?$",
+			"src": "^/api/upload-url/?$",
 			"dest": "_render"
 		},
 		{

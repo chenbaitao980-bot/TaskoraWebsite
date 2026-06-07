@@ -26,19 +26,18 @@ const POST = async ({ request }) => {
       headers: { "Content-Type": "application/json" }
     });
   }
-  let formData;
+  let platform;
   try {
-    formData = await request.formData();
+    const body = await request.json();
+    platform = body?.platform;
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid form data" }), {
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
       status: 400,
       headers: { "Content-Type": "application/json" }
     });
   }
-  const file = formData.get("file");
-  const platform = formData.get("platform");
-  if (!file || !platform) {
-    return new Response(JSON.stringify({ error: "Missing file or platform" }), {
+  if (!platform) {
+    return new Response(JSON.stringify({ error: "Missing platform" }), {
       status: 400,
       headers: { "Content-Type": "application/json" }
     });
@@ -50,52 +49,38 @@ const POST = async ({ request }) => {
       headers: { "Content-Type": "application/json" }
     });
   }
-  const fileBuffer = await file.arrayBuffer();
-  const storageRes = await fetch(
-    `${SUPABASE_URL}/storage/v1/object/downloads/${filename}`,
+  const signRes = await fetch(
+    `${SUPABASE_URL}/storage/v1/object/upload/sign/downloads/${filename}`,
     {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${SERVICE_ROLE_KEY}`,
         "apikey": SERVICE_ROLE_KEY,
-        "Content-Type": "application/octet-stream",
-        "x-upsert": "true"
+        "Content-Type": "application/json"
       },
-      body: fileBuffer
+      body: JSON.stringify({})
     }
   );
-  if (!storageRes.ok) {
-    const errText = await storageRes.text();
+  if (!signRes.ok) {
+    const errText = await signRes.text();
     return new Response(
-      JSON.stringify({ error: `Storage upload failed (${storageRes.status}): ${errText}` }),
+      JSON.stringify({ error: `Failed to create signed URL (${signRes.status}): ${errText}` }),
       { status: 502, headers: { "Content-Type": "application/json" } }
     );
   }
+  const { signedURL } = await signRes.json();
   const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/downloads/${filename}`;
-  const patchRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/download_links?platform=eq.${platform}`,
+  return new Response(
+    JSON.stringify({
+      signedURL: `${SUPABASE_URL}${signedURL}`,
+      filename,
+      publicUrl
+    }),
     {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": SERVICE_ROLE_KEY,
-        "Authorization": `Bearer ${SERVICE_ROLE_KEY}`,
-        "Prefer": "return=minimal"
-      },
-      body: JSON.stringify({ url: publicUrl })
+      status: 200,
+      headers: { "Content-Type": "application/json" }
     }
   );
-  if (!patchRes.ok) {
-    const errText = await patchRes.text();
-    return new Response(
-      JSON.stringify({ error: `DB update failed (${patchRes.status}): ${errText}` }),
-      { status: 502, headers: { "Content-Type": "application/json" } }
-    );
-  }
-  return new Response(JSON.stringify({ url: publicUrl }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" }
-  });
 };
 
 const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({

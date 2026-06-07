@@ -1,5 +1,5 @@
 import { A as AstroError, b5 as NoImageMetadata, bc as UnsupportedImageFormat, bn as MissingSharp } from './sequence_FZRkLEU7.mjs';
-import { b as baseService, d as detector, r as resolveDefaultOutputFormat, p as parseQuality } from './generic_UzpbZN5b.mjs';
+import { b as baseService, d as detector, r as resolveDefaultOutputFormat, p as parseQuality } from './generic_BtXp6trH.mjs';
 
 let sharp;
 const qualityTable = {
