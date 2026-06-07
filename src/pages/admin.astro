@@ -51,6 +51,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
   <script>
     const SUPABASE_URL = 'https://wlehkvsxftyxmxelcaps.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_Nz2Ro_4jBthvDwjeQ8m-ww_tT0wYgcF';
+    const SUPABASE_ANON_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndsZWhrdnN4ZnR5eG14ZWxjYXBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODI2NjksImV4cCI6MjA5NTA1ODY2OX0.JHKcSAcx4xCXhe9x_uEtdXOdx2mllLxhGlyKS9idSGA';
 
     const loadingEl = document.getElementById('admin-loading')!;
     const contentEl = document.getElementById('admin-content')!;
@@ -135,7 +136,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
-              'apikey': SUPABASE_ANON_KEY,
+              'apikey': SUPABASE_ANON_JWT,
               'Content-Type': file.type || 'application/octet-stream',
               'x-upsert': 'true',
             },
