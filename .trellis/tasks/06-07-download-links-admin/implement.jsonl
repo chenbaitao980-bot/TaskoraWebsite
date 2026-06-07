@@ -1,1 +1,4 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "新增 admin 页面路由需遵循 src/pages/ 目录规则，避免错放位置"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "admin 和 login 页面需用 StarlightPage 包裹，遵循页面结构和样式规范"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "页面内 <script> 块需用 as HTMLXxxElement 类型断言，不能用 any"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "dark mode 覆盖规则、build 验证要求、侧边栏 slug 规则"}

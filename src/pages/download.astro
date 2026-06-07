@@ -18,8 +18,8 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       <h3>Android</h3>
       <p>Android 8.0 及以上</p>
       <div class="download-links">
-        <a href="#" class="download-btn primary">下载 APK</a>
-        <a href="#" class="download-btn secondary">小米应用商店</a>
+        <a id="link-android-apk" href="#" class="download-btn primary">下载 APK</a>
+        <a id="link-android-xiaomi" href="#" class="download-btn secondary">小米应用商店</a>
       </div>
       <p class="version-info">v1.0.0 · 25MB · 2026-06-05</p>
     </div>
@@ -29,7 +29,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       <h3>Windows</h3>
       <p>Windows 10/11 (64-bit)</p>
       <div class="download-links">
-        <a href="#" class="download-btn primary">下载 ZIP</a>
+        <a id="link-windows" href="#" class="download-btn primary">下载 ZIP</a>
       </div>
       <p class="version-info">v1.0.0 · 45MB · 2026-06-05</p>
     </div>
@@ -39,7 +39,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       <h3>Web 在线版</h3>
       <p>无需安装，浏览器直接使用</p>
       <div class="download-links">
-        <a href="#" class="download-btn primary">打开 Web 版</a>
+        <a id="link-web" href="#" class="download-btn primary">打开 Web 版</a>
       </div>
       <p class="version-info">始终最新版本</p>
     </div>
@@ -53,6 +53,38 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       </div>
     </div>
   </div>
+
+  <script>
+    const SUPABASE_URL = 'https://wlehkvsxftyxmxelcaps.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_Nz2Ro_4jBthvDwjeQ8m-ww_tT0wYgcF';
+
+    (async () => {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/download_links?select=platform,url`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+        });
+        if (!res.ok) return;
+        const rows: { platform: string; url: string }[] = await res.json();
+        const linkMap: Record<string, string> = {};
+        for (const row of rows) {
+          if (row.url) linkMap[row.platform] = row.url;
+        }
+        const ids: Record<string, string> = {
+          'link-android-apk': 'android_apk',
+          'link-android-xiaomi': 'android_xiaomi',
+          'link-windows': 'windows_zip',
+          'link-web': 'web',
+        };
+        for (const [elId, platform] of Object.entries(ids)) {
+          const el = document.getElementById(elId) as HTMLAnchorElement | null;
+          if (el && linkMap[platform]) el.href = linkMap[platform];
+        }
+      } catch {}
+    })();
+  </script>
 
   <style>
     .download-grid {

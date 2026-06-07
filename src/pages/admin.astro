@@ -1,0 +1,235 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+---
+
+<StarlightPage
+  frontmatter={{
+    title: '下载链接管理',
+    description: 'Taskora 管理员后台 — 管理各平台下载链接',
+  }}
+>
+  <div id="admin-loading" class="status-msg">验证登录状态…</div>
+  <div id="admin-content" style="display:none;">
+    <div class="admin-header">
+      <p class="admin-hint">修改链接后点击「保存」立即生效，无需重新部署。</p>
+      <button id="logout-btn" class="logout-btn">退出登录</button>
+    </div>
+
+    <form id="links-form" class="links-form">
+      <div class="link-card">
+        <div class="link-label">📱 Android APK 直链</div>
+        <input type="url" id="field-android-apk" name="android_apk" placeholder="https://example.com/taskora.apk" />
+      </div>
+      <div class="link-card">
+        <div class="link-label">📱 小米应用商店链接</div>
+        <input type="url" id="field-android-xiaomi" name="android_xiaomi" placeholder="https://app.mi.com/details?id=..." />
+      </div>
+      <div class="link-card">
+        <div class="link-label">💻 Windows ZIP 直链</div>
+        <input type="url" id="field-windows" name="windows_zip" placeholder="https://example.com/taskora-win.zip" />
+      </div>
+      <div class="link-card">
+        <div class="link-label">🌐 Web 在线版网址</div>
+        <input type="url" id="field-web" name="web" placeholder="https://app.taskora.com" />
+      </div>
+
+      <button type="submit" class="save-btn" id="save-btn">保存所有链接</button>
+      <div id="save-result" class="save-result" style="display:none;"></div>
+    </form>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://wlehkvsxftyxmxelcaps.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_Nz2Ro_4jBthvDwjeQ8m-ww_tT0wYgcF';
+
+    const loadingEl = document.getElementById('admin-loading')!;
+    const contentEl = document.getElementById('admin-content')!;
+
+    const token = localStorage.getItem('taskora_admin_token');
+    if (!token) {
+      window.location.href = '/admin-login';
+    } else {
+      init(token);
+    }
+
+    async function init(token: string) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/download_links?select=platform,url`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (res.status === 401) {
+        localStorage.removeItem('taskora_admin_token');
+        window.location.href = '/admin-login';
+        return;
+      }
+
+      const rows: { platform: string; url: string }[] = await res.json();
+      const linkMap: Record<string, string> = {};
+      for (const row of rows) linkMap[row.platform] = row.url ?? '';
+
+      const fieldMap: Record<string, string> = {
+        'field-android-apk': 'android_apk',
+        'field-android-xiaomi': 'android_xiaomi',
+        'field-windows': 'windows_zip',
+        'field-web': 'web',
+      };
+      for (const [elId, platform] of Object.entries(fieldMap)) {
+        const el = document.getElementById(elId) as HTMLInputElement | null;
+        if (el) el.value = linkMap[platform] ?? '';
+      }
+
+      loadingEl.style.display = 'none';
+      contentEl.style.display = 'block';
+    }
+
+    document.getElementById('logout-btn')?.addEventListener('click', () => {
+      localStorage.removeItem('taskora_admin_token');
+      window.location.href = '/admin-login';
+    });
+
+    document.getElementById('links-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = localStorage.getItem('taskora_admin_token');
+      if (!token) { window.location.href = '/admin-login'; return; }
+
+      const btn = document.getElementById('save-btn') as HTMLButtonElement;
+      const resultEl = document.getElementById('save-result')!;
+      btn.disabled = true;
+      btn.textContent = '保存中…';
+      resultEl.style.display = 'none';
+
+      const fieldMap: Record<string, string> = {
+        'field-android-apk': 'android_apk',
+        'field-android-xiaomi': 'android_xiaomi',
+        'field-windows': 'windows_zip',
+        'field-web': 'web',
+      };
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Prefer': 'return=minimal',
+      };
+
+      const results = await Promise.all(
+        Object.entries(fieldMap).map(async ([elId, platform]) => {
+          const el = document.getElementById(elId) as HTMLInputElement;
+          const url = el.value.trim();
+          const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/download_links?platform=eq.${platform}`,
+            { method: 'PATCH', headers, body: JSON.stringify({ url }) }
+          );
+          return res.ok;
+        })
+      );
+
+      btn.disabled = false;
+      btn.textContent = '保存所有链接';
+
+      if (results.every(Boolean)) {
+        resultEl.textContent = '✓ 保存成功，下载页已更新';
+        resultEl.className = 'save-result success';
+      } else {
+        resultEl.textContent = '部分保存失败，请重试（token 可能已过期，尝试重新登录）';
+        resultEl.className = 'save-result error';
+      }
+      resultEl.style.display = 'block';
+    });
+  </script>
+
+  <style>
+    .status-msg {
+      color: var(--sl-color-gray-2);
+      text-align: center;
+      padding: 2rem;
+    }
+    .admin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .admin-hint {
+      color: var(--sl-color-gray-2);
+      font-size: 0.875rem;
+      margin: 0;
+    }
+    .logout-btn {
+      padding: 0.4rem 1rem;
+      border: 1px solid var(--sl-color-gray-5);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--sl-color-text);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .logout-btn:hover {
+      border-color: var(--sl-color-accent);
+      color: var(--sl-color-accent);
+    }
+    .links-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 640px;
+    }
+    .link-card {
+      background: var(--sl-color-bg-nav);
+      border: 1px solid var(--sl-color-gray-5);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .link-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--sl-color-text);
+    }
+    .link-card input {
+      padding: 0.55rem 0.85rem;
+      border: 1px solid var(--sl-color-gray-5);
+      border-radius: 8px;
+      background: var(--sl-color-bg);
+      color: var(--sl-color-text);
+      font-size: 0.9rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .link-card input:focus {
+      outline: 2px solid var(--sl-color-accent);
+      outline-offset: 1px;
+    }
+    .save-btn {
+      padding: 0.7rem 2rem;
+      border: none;
+      border-radius: 8px;
+      background: var(--sl-color-accent);
+      color: var(--sl-color-white);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      align-self: flex-start;
+    }
+    .save-btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    .save-result {
+      font-size: 0.875rem;
+      padding: 0.5rem 0;
+    }
+    .save-result.success { color: #2D9D5E; }
+    .save-result.error { color: #D13B3B; }
+    [data-theme='dark'] .link-card input {
+      border-color: var(--sl-color-gray-4);
+    }
+  </style>
+</StarlightPage>

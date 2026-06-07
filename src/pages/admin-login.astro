@@ -1,0 +1,134 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+---
+
+<StarlightPage
+  frontmatter={{
+    title: '管理员登录',
+    description: 'Taskora 后台管理登录',
+  }}
+>
+  <div class="login-container">
+    <form id="login-form" class="login-form">
+      <div class="form-group">
+        <label for="email">邮箱</label>
+        <input type="email" id="email" name="email" required placeholder="your@email.com" />
+      </div>
+      <div class="form-group">
+        <label for="password">密码</label>
+        <input type="password" id="password" name="password" required placeholder="••••••••" />
+      </div>
+      <button type="submit" class="login-btn" id="login-btn">登录</button>
+      <div id="login-error" class="login-error" style="display:none;"></div>
+    </form>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://wlehkvsxftyxmxelcaps.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_Nz2Ro_4jBthvDwjeQ8m-ww_tT0wYgcF';
+
+    if (localStorage.getItem('taskora_admin_token')) {
+      window.location.href = '/admin';
+    }
+
+    document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target as HTMLFormElement;
+      const btn = document.getElementById('login-btn') as HTMLButtonElement;
+      const errorEl = document.getElementById('login-error')!;
+
+      const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+      const password = (form.elements.namedItem('password') as HTMLInputElement).value;
+
+      btn.disabled = true;
+      btn.textContent = '登录中…';
+      errorEl.style.display = 'none';
+
+      try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errorEl.textContent = data.error_description || data.msg || '登录失败，请检查邮箱和密码';
+          errorEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = '登录';
+          return;
+        }
+        localStorage.setItem('taskora_admin_token', data.access_token);
+        window.location.href = '/admin';
+      } catch {
+        errorEl.textContent = '网络错误，请重试';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = '登录';
+      }
+    });
+  </script>
+
+  <style>
+    .login-container {
+      max-width: 400px;
+      margin: 2rem auto;
+    }
+    .login-form {
+      background: var(--sl-color-bg-nav);
+      border: 1px solid var(--sl-color-gray-5);
+      border-radius: 16px;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .form-group label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--sl-color-text);
+    }
+    .form-group input {
+      padding: 0.6rem 0.85rem;
+      border: 1px solid var(--sl-color-gray-5);
+      border-radius: 8px;
+      background: var(--sl-color-bg);
+      color: var(--sl-color-text);
+      font-size: 0.95rem;
+    }
+    .form-group input:focus {
+      outline: 2px solid var(--sl-color-accent);
+      outline-offset: 1px;
+    }
+    .login-btn {
+      padding: 0.65rem;
+      border: none;
+      border-radius: 8px;
+      background: var(--sl-color-accent);
+      color: var(--sl-color-white);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .login-btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    .login-error {
+      color: #D13B3B;
+      font-size: 0.875rem;
+      text-align: center;
+    }
+    [data-theme='dark'] .form-group input {
+      border-color: var(--sl-color-gray-4);
+    }
+  </style>
+</StarlightPage>
