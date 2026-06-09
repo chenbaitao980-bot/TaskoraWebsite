@@ -1,5 +1,6 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+export const prerender = false;
 
 interface Props {
   title: string;
@@ -7,7 +8,7 @@ interface Props {
   activePage?: string;
 }
 
-const { title, description, activePage = 'index' } = Astro.props;
+const { title = '管理后台', description = 'Taskora 管理员后台', activePage = 'index' } = Astro.props;
 
 const navItems = [
   { id: 'index', label: '首页', href: '/admin' },
