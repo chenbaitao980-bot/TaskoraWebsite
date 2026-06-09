@@ -88,13 +88,29 @@ const navItems = [
   </script>
 
   <style>
-    /* Override Starlight content column max-width — .sl-container limits to --sl-content-width,
-       which leaves blank space on the right in admin pages */
+    /*
+     * Override Starlight layout constraints for admin pages.
+     * Root cause: Starlight sets --sl-content-width (default 45rem, splash 67.5rem) and uses it
+     * in .sl-container max-width. We override the variable itself AND all containers.
+     */
+    :global(:root) {
+      --sl-content-width: 100vw !important;
+    }
     :global(.sl-container) {
       max-width: 100% !important;
       margin-inline: 0 !important;
+      width: 100% !important;
     }
-    /* Also neutralize hero grid (7fr 4fr at 50rem+) in case hero slot is active */
+    :global(.content-panel) {
+      padding-inline: 0 !important;
+    }
+    :global(.sl-markdown-content) {
+      width: 100% !important;
+    }
+    :global(.main-pane) {
+      width: 100% !important;
+    }
+    /* Neutralize hero grid (7fr 4fr at 50rem+) */
     :global(.hero) {
       display: block !important;
       padding-block: 1rem !important;
