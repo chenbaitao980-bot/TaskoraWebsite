@@ -88,15 +88,16 @@ const navItems = [
   </script>
 
   <style>
-    /* Override Starlight splash hero grid — default goes 7fr 4fr at 50rem+, leaving blank right column */
+    /* Override Starlight content column max-width — .sl-container limits to --sl-content-width,
+       which leaves blank space on the right in admin pages */
+    :global(.sl-container) {
+      max-width: 100% !important;
+      margin-inline: 0 !important;
+    }
+    /* Also neutralize hero grid (7fr 4fr at 50rem+) in case hero slot is active */
     :global(.hero) {
       display: block !important;
       padding-block: 1rem !important;
-    }
-    :global(.hero > .copy),
-    :global(.sl-content-wrapper) {
-      max-width: 100% !important;
-      text-align: start !important;
     }
 
     .status-msg {
