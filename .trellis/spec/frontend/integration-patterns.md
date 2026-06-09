@@ -4,6 +4,39 @@ Contracts and gotchas for browser ↔ external service integrations in this proj
 
 ---
 
+## Admin API Route Auth Pattern
+
+### Scenario: Astro API route protected by admin JWT
+
+All admin API routes follow this pattern:
+1. Extract JWT from `Authorization: Bearer {token}`
+2. Verify by calling `${SUPABASE_URL}/auth/v1/user` with the token
+3. Check `user_data.user_metadata?.role === 'admin'`
+4. If valid, proxy the request to Supabase REST using `SERVICE_ROLE_KEY`
+
+```typescript
+// Correct: verify admin, then proxy with service role
+async function verifyAdmin(request: Request): Promise<{ email: string } | null> {
+  const token = request.headers.get('Authorization')?.startsWith('Bearer ')
+    ? request.headers.get('Authorization')!.slice(7) : '';
+  if (!token) return null;
+  const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SERVICE_ROLE_KEY },
+  });
+  if (!userRes.ok) return null;
+  const userData = await userRes.json();
+  return userData.user_metadata?.role === 'admin'
+    ? { email: userData.email ?? '' }
+    : null;
+}
+```
+
+**Location**: `src/pages/api/admin/*.ts`
+
+**Why**: The `sb_publishable_xxx` anon key cannot be used as a Bearer JWT. Admin identity must come from a real Supabase JWT issued at login time.
+
+---
+
 ## Supabase Auth Key Usage
 
 ### Scenario: Public (unauthenticated) REST reads

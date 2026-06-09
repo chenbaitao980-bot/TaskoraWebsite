@@ -248,7 +248,7 @@ import AdminLayout from './layout.astro';
 
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/member_types?select=*,user_count:member_subscriptions(count)&order=sort_order.asc`,
+        `${SUPABASE_URL}/rest/v1/member_types?select=*,user_count:user_subscriptions(count)&order=sort_order.asc`,
         { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` } }
       );
       if (res.status === 401) {
@@ -666,7 +666,7 @@ import AdminLayout from './layout.astro';
               method: 'DELETE',
               headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
             });
-            await logOperation(token, 'delete_tier', `删除充值梯度 ID: ${id}`, '');
+            await logOperation(token, 'delete_tier', `删除充值梯度 ID: ${id}`, JSON.stringify({ id }));
             await loadTiers(token);
           }
         });
@@ -761,6 +761,23 @@ import AdminLayout from './layout.astro';
   // --- 操作日志 ---
   async function logOperation(token: string, action: string, detail: string, payload: string) {
     try {
+      // Fetch admin email from Supabase Auth
+      let adminEmail: string | null = null;
+      try {
+        const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'apikey': SUPABASE_ANON_KEY,
+          },
+        });
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          adminEmail = userData.email ?? null;
+        }
+      } catch {
+        // Ignore email fetch errors
+      }
+
       await fetch(`${SUPABASE_URL}/rest/v1/member_config_logs`, {
         method: 'POST',
         headers: {
@@ -768,7 +785,7 @@ import AdminLayout from './layout.astro';
           'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ action, detail, payload }),
+        body: JSON.stringify({ action, detail, payload, admin_email: adminEmail }),
       });
     } catch {
       // Ignore log errors
