@@ -60,6 +60,40 @@ import AdminLayout from './layout.astro';
     <div id="orders-empty" class="orders-empty hidden">暂无记录</div>
     <div id="orders-error" class="save-result error hidden"></div>
   </div>
+
+  <hr class="section-divider" />
+
+  <!-- 白名单豁免管理 -->
+  <div class="links-form">
+    <div class="section-title"><svg class="section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 白名单豁免管理</div>
+
+    <!-- 新增白名单表单 -->
+    <div class="link-card">
+      <div class="link-label">新增豁免邮箱</div>
+      <input type="text" id="whitelist-email-input" placeholder="user@example.com" autocomplete="off" />
+      <input type="text" id="whitelist-note-input" placeholder="备注（可选）" autocomplete="off" />
+      <button type="button" id="whitelist-add-btn" class="save-btn">加入白名单</button>
+      <div id="whitelist-add-result" class="save-result hidden"></div>
+    </div>
+
+    <!-- 白名单列表 -->
+    <div id="whitelist-loading" class="orders-loading">加载中…</div>
+    <div id="whitelist-table-wrap" class="hidden">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>邮箱</th>
+            <th>备注</th>
+            <th>加入时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="whitelist-tbody"></tbody>
+      </table>
+    </div>
+    <div id="whitelist-empty" class="orders-empty hidden">暂无白名单记录</div>
+    <div id="whitelist-error" class="save-result error hidden"></div>
+  </div>
 </AdminLayout>
 
 <script>
@@ -247,11 +281,153 @@ import AdminLayout from './layout.astro';
     if (token) loadOrders(token);
   });
 
+  // --- 白名单管理 ---
+  async function loadWhitelist(token: string) {
+    const loadingEl = document.getElementById('whitelist-loading')!;
+    const tableWrap = document.getElementById('whitelist-table-wrap')!;
+    const emptyEl = document.getElementById('whitelist-empty')!;
+    const errorEl = document.getElementById('whitelist-error')!;
+    const tbody = document.getElementById('whitelist-tbody')!;
+
+    loadingEl.classList.remove('hidden');
+    tableWrap.classList.add('hidden');
+    emptyEl.classList.add('hidden');
+    errorEl.classList.add('hidden');
+
+    try {
+      const res = await fetch('/api/admin/whitelist', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (res.status === 401) {
+        localStorage.removeItem('taskora_admin_token');
+        window.location.href = '/admin-login';
+        return;
+      }
+      if (!res.ok) throw new Error(`请求失败 (${res.status})`);
+
+      const list: { email: string; note: string | null; created_at: string }[] = await res.json();
+
+      loadingEl.classList.add('hidden');
+
+      if (list.length === 0) {
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+
+      tbody.innerHTML = list.map(item => `
+        <tr>
+          <td>${item.email}</td>
+          <td>${item.note ?? '—'}</td>
+          <td>${formatDatetime(item.created_at)}</td>
+          <td>
+            <button class="whitelist-del-btn" data-email="${item.email}">移除</button>
+          </td>
+        </tr>
+      `).join('');
+
+      // 绑定删除按钮
+      tbody.querySelectorAll<HTMLButtonElement>('.whitelist-del-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const email = btn.dataset.email!;
+          if (!confirm(`确认将 ${email} 从白名单移除？`)) return;
+          btn.disabled = true;
+          btn.textContent = '移除中…';
+          const t = localStorage.getItem('taskora_admin_token');
+          if (!t) { window.location.href = '/admin-login'; return; }
+          try {
+            const delRes = await fetch('/api/admin/whitelist', {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${t}`,
+              },
+              body: JSON.stringify({ email }),
+            });
+            if (!delRes.ok) {
+              const errData = await delRes.json().catch(() => ({}));
+              throw new Error(errData.error || `删除失败 (${delRes.status})`);
+            }
+            await loadWhitelist(t);
+          } catch (err: unknown) {
+            btn.disabled = false;
+            btn.textContent = '移除';
+            alert(`移除失败：${err instanceof Error ? err.message : String(err)}`);
+          }
+        });
+      });
+
+      tableWrap.classList.remove('hidden');
+    } catch (err: unknown) {
+      loadingEl.classList.add('hidden');
+      errorEl.textContent = `加载失败：${err instanceof Error ? err.message : String(err)}`;
+      errorEl.classList.remove('hidden');
+    }
+  }
+
+  document.getElementById('whitelist-add-btn')?.addEventListener('click', async () => {
+    const token = localStorage.getItem('taskora_admin_token');
+    if (!token) { window.location.href = '/admin-login'; return; }
+
+    const emailInput = document.getElementById('whitelist-email-input') as HTMLInputElement;
+    const noteInput = document.getElementById('whitelist-note-input') as HTMLInputElement;
+    const btn = document.getElementById('whitelist-add-btn') as HTMLButtonElement;
+    const resultEl = document.getElementById('whitelist-add-result')!;
+
+    const email = emailInput.value.trim();
+    const note = noteInput.value.trim();
+
+    if (!email) {
+      resultEl.textContent = '请输入邮箱';
+      resultEl.className = 'save-result error';
+      resultEl.classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '添加中…';
+    resultEl.classList.add('hidden');
+
+    try {
+      const res = await fetch('/api/admin/whitelist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email, note }),
+      });
+
+      if (res.status === 401) {
+        localStorage.removeItem('taskora_admin_token');
+        window.location.href = '/admin-login';
+        return;
+      }
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `添加失败 (${res.status})`);
+
+      resultEl.textContent = `✓ 已将 ${email} 加入白名单`;
+      resultEl.className = 'save-result success';
+      resultEl.classList.remove('hidden');
+      emailInput.value = '';
+      noteInput.value = '';
+      await loadWhitelist(token);
+    } catch (err: unknown) {
+      resultEl.textContent = `✗ ${err instanceof Error ? err.message : String(err)}`;
+      resultEl.className = 'save-result error';
+      resultEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '加入白名单';
+    }
+  });
+
   // Initialize
   const token = localStorage.getItem('taskora_admin_token');
   if (token) {
     initPaymentConfig(token);
     loadOrders(token);
+    loadWhitelist(token);
   }
 </script>
 
@@ -425,6 +601,20 @@ import AdminLayout from './layout.astro';
   [data-theme='dark'] .status-pending { background: #422006; color: #FCD34D; }
   [data-theme='dark'] .status-paid    { background: #052e16; color: #4ADE80; }
   [data-theme='dark'] .status-closed  { background: #1E293B; color: #94A3B8; }
+  .whitelist-del-btn {
+    padding: 0.2rem 0.65rem;
+    border: 1px solid #D13B3B;
+    border-radius: 6px;
+    background: transparent;
+    color: #D13B3B;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background-color 0.1s;
+  }
+  .whitelist-del-btn:hover:not(:disabled) { background: rgba(209,59,59,0.08); }
+  .whitelist-del-btn:disabled { opacity: 0.5; cursor: default; }
+  [data-theme='dark'] .whitelist-del-btn { border-color: #F87171; color: #F87171; }
+  [data-theme='dark'] .whitelist-del-btn:hover:not(:disabled) { background: rgba(248,113,113,0.1); }
   .hidden { display: none; }
   [data-theme='dark'] .save-result.success { color: #4ADE80; }
   [data-theme='dark'] .save-result.error { color: #F87171; }
