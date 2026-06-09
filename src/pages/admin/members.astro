@@ -128,16 +128,18 @@ import AdminLayout from './layout.astro';
     <form id="discount-form" class="links-form">
       <input type="hidden" id="discount-id" />
       <div class="link-card">
-        <div class="link-label">折扣码</div>
-        <input type="text" id="discount-code" placeholder="例：VIP50" required />
+        <div class="link-label">折扣码（可手动修改）</div>
+        <input type="text" id="discount-code" placeholder="选择会员类型后自动生成" required data-auto="true" />
       </div>
       <div class="link-card">
         <div class="link-label">折扣比例（1-100，例：80 表示八折）</div>
         <input type="number" id="discount-percent" min="1" max="100" placeholder="80" required />
       </div>
       <div class="link-card">
-        <div class="link-label">适用会员类型 ID（留空则全部适用）</div>
-        <input type="text" id="discount-type-id" placeholder="可选" />
+        <div class="link-label">适用会员类型（留空则全部适用）</div>
+        <select id="discount-type-id">
+          <option value="">全部适用</option>
+        </select>
       </div>
       <div class="link-card toggle-card">
         <label class="toggle-label">
@@ -546,22 +548,58 @@ import AdminLayout from './layout.astro';
     }
   }
 
+  function populateTypeSelect(selectedId?: string | null) {
+    const select = document.getElementById('discount-type-id') as HTMLSelectElement;
+    select.innerHTML = '<option value="">全部适用</option>';
+    allTypes.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.name;
+      if (t.id === selectedId) opt.selected = true;
+      select.appendChild(opt);
+    });
+  }
+
+  function buildSuggestedCode(): string {
+    const select = document.getElementById('discount-type-id') as HTMLSelectElement;
+    const percentEl = document.getElementById('discount-percent') as HTMLInputElement;
+    const percent = parseInt(percentEl.value, 10);
+    const typeId = select.value;
+    const type = allTypes.find(t => t.id === typeId);
+    const raw = type?.name ?? '';
+    const letters = raw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6) || raw.slice(0, 2) || 'CODE';
+    return percent ? `${letters}${percent}` : letters;
+  }
+
+  function maybeSuggestCode() {
+    const codeEl = document.getElementById('discount-code') as HTMLInputElement;
+    if (codeEl.dataset.auto === 'true') {
+      codeEl.value = buildSuggestedCode();
+    }
+  }
+
   function showDiscountForm(code?: DiscountCode) {
     const section = document.getElementById('discount-form-section')!;
     const title = document.getElementById('discount-form-title')!;
     section.classList.remove('hidden');
 
+    populateTypeSelect(code?.type_id);
+
     if (code) {
       title.textContent = '编辑折扣码';
       (document.getElementById('discount-id') as HTMLInputElement).value = code.id;
-      (document.getElementById('discount-code') as HTMLInputElement).value = code.code;
+      const codeEl = document.getElementById('discount-code') as HTMLInputElement;
+      codeEl.value = code.code;
+      codeEl.dataset.auto = 'false';
       (document.getElementById('discount-percent') as HTMLInputElement).value = String(code.percent);
-      (document.getElementById('discount-type-id') as HTMLInputElement).value = code.type_id || '';
       (document.getElementById('discount-active') as HTMLInputElement).checked = code.active;
     } else {
       title.textContent = '添加折扣码';
       (document.getElementById('discount-form') as HTMLFormElement).reset();
       (document.getElementById('discount-id') as HTMLInputElement).value = '';
+      const codeEl = document.getElementById('discount-code') as HTMLInputElement;
+      codeEl.dataset.auto = 'true';
+      populateTypeSelect(null);
     }
     section.scrollIntoView({ behavior: 'smooth' });
   }
@@ -569,6 +607,14 @@ import AdminLayout from './layout.astro';
   document.getElementById('add-discount-btn')?.addEventListener('click', () => showDiscountForm());
   document.getElementById('discount-cancel-btn')?.addEventListener('click', () => {
     document.getElementById('discount-form-section')!.classList.add('hidden');
+  });
+
+  // 自动推荐折扣码：选类型或改比例时更新
+  document.getElementById('discount-type-id')?.addEventListener('change', maybeSuggestCode);
+  document.getElementById('discount-percent')?.addEventListener('input', maybeSuggestCode);
+  // 用户手动编辑折扣码时取消自动推荐
+  document.getElementById('discount-code')?.addEventListener('input', (e) => {
+    (e.currentTarget as HTMLInputElement).dataset.auto = 'false';
   });
 
   document.getElementById('discount-form')?.addEventListener('submit', async (e) => {
@@ -583,7 +629,7 @@ import AdminLayout from './layout.astro';
     resultEl.classList.add('hidden');
 
     const id = (document.getElementById('discount-id') as HTMLInputElement).value;
-    const typeIdRaw = (document.getElementById('discount-type-id') as HTMLInputElement).value.trim();
+    const typeIdRaw = (document.getElementById('discount-type-id') as HTMLSelectElement).value;
     const payload = {
       code: (document.getElementById('discount-code') as HTMLInputElement).value.trim().toUpperCase(),
       percent: parseInt((document.getElementById('discount-percent') as HTMLInputElement).value, 10),
@@ -950,7 +996,8 @@ import AdminLayout from './layout.astro';
     outline-offset: 1px;
   }
   .link-card input[type="text"],
-  .link-card input[type="number"] {
+  .link-card input[type="number"],
+  .link-card select {
     padding: 0.55rem 0.85rem;
     border: 1px solid var(--sl-color-gray-5);
     border-radius: 8px;
@@ -962,7 +1009,8 @@ import AdminLayout from './layout.astro';
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
   .link-card input[type="text"]:focus,
-  .link-card input[type="number"]:focus {
+  .link-card input[type="number"]:focus,
+  .link-card select:focus {
     outline: 2px solid var(--sl-color-accent);
     outline-offset: 1px;
   }
@@ -1197,7 +1245,8 @@ import AdminLayout from './layout.astro';
   [data-theme='dark'] .save-result.success { color: #4ADE80; }
   [data-theme='dark'] .save-result.error   { color: #F87171; }
   [data-theme='dark'] .link-card input[type="text"],
-  [data-theme='dark'] .link-card input[type="number"] {
+  [data-theme='dark'] .link-card input[type="number"],
+  [data-theme='dark'] .link-card select {
     border-color: var(--sl-color-gray-4);
   }
   [data-theme='dark'] .link-card textarea {
