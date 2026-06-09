@@ -1,0 +1,85 @@
+---
+import AdminLayout from './layout.astro';
+---
+
+<AdminLayout title="管理后台" description="Taskora 管理员后台" activePage="index">
+  <div class="admin-welcome">
+    <h2>欢迎使用 Taskora 管理后台</h2>
+    <p>请从左侧导航选择要管理的模块。</p>
+    <div class="module-cards">
+      <a href="/admin/downloads" class="module-card">
+        <span class="module-icon">📥</span>
+        <span class="module-title">下载链接</span>
+        <span class="module-desc">管理各平台下载链接和文件上传</span>
+      </a>
+      <a href="/admin/payment" class="module-card">
+        <span class="module-icon">💳</span>
+        <span class="module-title">支付配置</span>
+        <span class="module-desc">支付宝配置和订单管理</span>
+      </a>
+      <a href="/admin/members" class="module-card">
+        <span class="module-icon">👥</span>
+        <span class="module-title">会员配置</span>
+        <span class="module-desc">会员类型和价格配置</span>
+      </a>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .admin-welcome {
+    text-align: center;
+    padding: 3rem 1rem;
+  }
+  .admin-welcome h2 {
+    color: var(--sl-color-text);
+    margin-bottom: 0.75rem;
+  }
+  .admin-welcome p {
+    color: var(--sl-color-gray-2);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+  .module-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .module-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 2rem 1.5rem;
+    background: var(--sl-color-bg-nav);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .module-card:hover {
+    border-color: var(--sl-color-accent);
+    transform: translateY(-2px);
+  }
+  .module-icon {
+    font-size: 2.5rem;
+  }
+  .module-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--sl-color-text);
+  }
+  .module-desc {
+    font-size: 0.85rem;
+    color: var(--sl-color-gray-2);
+    text-align: center;
+  }
+  [data-theme='dark'] .module-card {
+    border-color: var(--sl-color-gray-4);
+  }
+  [data-theme='dark'] .module-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+</style>

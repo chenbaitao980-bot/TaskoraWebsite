@@ -1,0 +1,385 @@
+---
+import AdminLayout from './layout.astro';
+---
+
+<AdminLayout title="下载链接管理" description="管理各平台下载链接和文件上传" activePage="downloads">
+  <div class="links-header">
+    <p class="admin-hint">修改链接后点击「保存」立即生效，无需重新部署。</p>
+  </div>
+
+  <form id="links-form" class="links-form">
+    <div class="link-card">
+      <div class="link-label">📱 Android APK 直链</div>
+      <input type="file" id="file-input-apk" accept=".apk" class="hidden" />
+      <div id="drop-zone-apk" class="drop-zone" data-platform="android_apk" data-filename="taskora-latest.apk">
+        <div class="drop-zone-hint">拖拽文件到此处，或点击选择文件</div>
+        <div id="drop-zone-apk-current" class="drop-zone-current">暂无文件</div>
+      </div>
+      <div id="upload-status-apk" class="upload-status hidden"></div>
+    </div>
+    <div class="link-card">
+      <div class="link-label">📱 小米应用商店链接</div>
+      <input type="url" id="field-android-xiaomi" name="android_xiaomi" placeholder="https://app.mi.com/details?id=..." />
+    </div>
+    <div class="link-card">
+      <div class="link-label">💻 Windows ZIP 直链</div>
+      <input type="file" id="file-input-zip" accept=".zip" class="hidden" />
+      <div id="drop-zone-zip" class="drop-zone" data-platform="windows_zip" data-filename="taskora-latest.zip">
+        <div class="drop-zone-hint">拖拽文件到此处，或点击选择文件</div>
+        <div id="drop-zone-zip-current" class="drop-zone-current">暂无文件</div>
+      </div>
+      <div id="upload-status-zip" class="upload-status hidden"></div>
+    </div>
+    <div class="link-card">
+      <div class="link-label">🌐 Web 在线版网址</div>
+      <input type="url" id="field-web" name="web" placeholder="https://app.taskora.com" />
+    </div>
+
+    <button type="submit" class="save-btn" id="save-btn">保存所有链接</button>
+    <div id="save-result" class="save-result hidden"></div>
+  </form>
+</AdminLayout>
+
+<script>
+  const SUPABASE_URL = 'https://wlehkvsxftyxmxelcaps.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_Nz2Ro_4jBthvDwjeQ8m-ww_tT0wYgcF';
+
+  function getFilenameFromUrl(url: string): string {
+    try {
+      const parts = url.split('/');
+      return parts[parts.length - 1] || url;
+    } catch {
+      return url;
+    }
+  }
+
+  async function uploadFile(file: File, platform: string, filename: string, statusEl: HTMLElement, currentEl: HTMLElement) {
+    const token = localStorage.getItem('taskora_admin_token');
+    if (!token) { window.location.href = '/admin-login'; return; }
+
+    const dropZone = document.querySelector(`[data-platform="${platform}"]`) as HTMLElement | null;
+    const type = platform === 'android_apk' ? 'apk' : 'zip';
+    const fileInput = document.getElementById(`file-input-${type}`) as HTMLInputElement | null;
+    if (dropZone) dropZone.classList.add('uploading');
+    if (fileInput) fileInput.disabled = true;
+
+    statusEl.className = 'upload-status loading';
+    statusEl.textContent = `上传中… (${(file.size / 1048576).toFixed(1)} MB)`;
+    statusEl.classList.remove('hidden');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('filename', filename);
+      formData.append('platform', platform);
+
+      const uploadRes = await fetch(
+        'https://wlehkvsxftyxmxelcaps.supabase.co/functions/v1/upload-to-github',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'apikey': 'sb_publishable_Nz2Ro_4jBthvDwjeQ8m-ww_tT0wYgcF',
+          },
+          body: formData,
+        }
+      );
+
+      if (uploadRes.status === 401) {
+        localStorage.removeItem('taskora_admin_token');
+        window.location.href = '/admin-login';
+        return;
+      }
+
+      const result = await uploadRes.json();
+
+      if (!uploadRes.ok || result.error) {
+        throw new Error(result.error || `上传失败 (${uploadRes.status})`);
+      }
+
+      const downloadUrl: string = result.url;
+
+      const patchRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/download_links?platform=eq.${platform}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${token}`,
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify({ url: downloadUrl }),
+        }
+      );
+
+      if (patchRes.status === 401) {
+        localStorage.removeItem('taskora_admin_token');
+        window.location.href = '/admin-login';
+        return;
+      }
+      if (!patchRes.ok) {
+        throw new Error(`链接更新失败 (${patchRes.status})`);
+      }
+
+      statusEl.textContent = `✓ 已上传：${filename}`;
+      statusEl.className = 'upload-status success';
+      currentEl.textContent = filename;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      statusEl.textContent = `✗ 上传失败，请重试（${msg}）`;
+      statusEl.className = 'upload-status error';
+    } finally {
+      if (dropZone) dropZone.classList.remove('uploading');
+      if (fileInput) fileInput.disabled = false;
+    }
+  }
+
+  function setupUploadZone(type: 'apk' | 'zip') {
+    const dropZone = document.getElementById(`drop-zone-${type}`) as HTMLDivElement | null;
+    const fileInput = document.getElementById(`file-input-${type}`) as HTMLInputElement | null;
+    const statusEl = document.getElementById(`upload-status-${type}`) as HTMLElement | null;
+    const currentEl = document.getElementById(`drop-zone-${type}-current`) as HTMLElement | null;
+
+    if (!dropZone || !fileInput || !statusEl || !currentEl) return;
+
+    const platform = dropZone.dataset.platform!;
+    const filename = dropZone.dataset.filename!;
+
+    dropZone.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files?.[0];
+      if (file) {
+        uploadFile(file, platform, filename, statusEl, currentEl);
+        fileInput.value = '';
+      }
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', (e) => {
+      if (!dropZone.contains(e.relatedTarget as Node)) {
+        dropZone.classList.remove('dragover');
+      }
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      const file = e.dataTransfer?.files?.[0];
+      if (file) {
+        uploadFile(file, platform, filename, statusEl, currentEl);
+      }
+    });
+  }
+
+  // Initialize
+  const token = localStorage.getItem('taskora_admin_token');
+  if (token) {
+    fetch(`${SUPABASE_URL}/rest/v1/download_links?select=platform,url`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+      },
+    }).then(res => res.json()).then((rows: { platform: string; url: string }[]) => {
+      const linkMap: Record<string, string> = {};
+      for (const row of rows) linkMap[row.platform] = row.url ?? '';
+
+      const urlFieldMap: Record<string, string> = {
+        'field-android-xiaomi': 'android_xiaomi',
+        'field-web': 'web',
+      };
+      for (const [elId, platform] of Object.entries(urlFieldMap)) {
+        const el = document.getElementById(elId) as HTMLInputElement | null;
+        if (el) el.value = linkMap[platform] ?? '';
+      }
+
+      const apkUrl = linkMap['android_apk'] ?? '';
+      const zipUrl = linkMap['windows_zip'] ?? '';
+      const apkCurrentEl = document.getElementById('drop-zone-apk-current');
+      const zipCurrentEl = document.getElementById('drop-zone-zip-current');
+
+      if (apkCurrentEl) apkCurrentEl.textContent = apkUrl ? getFilenameFromUrl(apkUrl) : '暂无文件';
+      if (zipCurrentEl) zipCurrentEl.textContent = zipUrl ? getFilenameFromUrl(zipUrl) : '暂无文件';
+
+      setupUploadZone('apk');
+      setupUploadZone('zip');
+    });
+  }
+
+  document.getElementById('links-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('taskora_admin_token');
+    if (!token) { window.location.href = '/admin-login'; return; }
+
+    const btn = document.getElementById('save-btn') as HTMLButtonElement;
+    const resultEl = document.getElementById('save-result')!;
+    btn.disabled = true;
+    btn.textContent = '保存中…';
+    resultEl.classList.add('hidden');
+
+    const fieldMap: Record<string, string> = {
+      'field-android-xiaomi': 'android_xiaomi',
+      'field-web': 'web',
+    };
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${token}`,
+      'Prefer': 'return=minimal',
+    };
+
+    const results = await Promise.all(
+      Object.entries(fieldMap).map(async ([elId, platform]) => {
+        const el = document.getElementById(elId) as HTMLInputElement;
+        const url = el.value.trim();
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/download_links?platform=eq.${platform}`,
+          { method: 'PATCH', headers, body: JSON.stringify({ url }) }
+        );
+        if (res.status === 401) {
+          localStorage.removeItem('taskora_admin_token');
+          window.location.href = '/admin-login';
+          return false;
+        }
+        return res.ok;
+      })
+    );
+
+    btn.disabled = false;
+    btn.textContent = '保存所有链接';
+
+    if (results.every(Boolean)) {
+      resultEl.textContent = '✓ 保存成功，下载页已更新';
+      resultEl.className = 'save-result success';
+    } else {
+      resultEl.textContent = '部分保存失败，请重试（token 可能已过期，尝试重新登录）';
+      resultEl.className = 'save-result error';
+    }
+    resultEl.classList.remove('hidden');
+  });
+</script>
+
+<style>
+  .links-header {
+    margin-bottom: 1.5rem;
+  }
+  .admin-hint {
+    color: var(--sl-color-gray-2);
+    font-size: 0.875rem;
+    margin: 0;
+  }
+  .links-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 640px;
+  }
+  .link-card {
+    background: var(--sl-color-bg-nav);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .link-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--sl-color-text);
+  }
+  .link-card input[type="url"] {
+    padding: 0.55rem 0.85rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 8px;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    font-size: 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .link-card input[type="url"]:focus {
+    outline: 2px solid var(--sl-color-accent);
+    outline-offset: 1px;
+  }
+  .drop-zone {
+    border: 2px dashed var(--sl-color-gray-5);
+    border-radius: 8px;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    background: var(--sl-color-bg);
+    transition: border-color 0.15s, background 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .drop-zone:hover {
+    border-color: var(--sl-color-accent);
+    background: var(--sl-color-bg-sidebar);
+  }
+  .drop-zone.dragover {
+    border-color: var(--sl-color-accent);
+    background: var(--sl-color-bg-sidebar);
+  }
+  .drop-zone.uploading {
+    pointer-events: none;
+    opacity: 0.6;
+    cursor: default;
+  }
+  .drop-zone-hint {
+    font-size: 0.875rem;
+    color: var(--sl-color-gray-2);
+  }
+  .drop-zone-current {
+    font-size: 0.8rem;
+    color: var(--sl-color-gray-3);
+  }
+  .upload-status {
+    font-size: 0.875rem;
+    padding: 0.35rem 0;
+  }
+  .upload-status.loading { color: var(--sl-color-gray-2); }
+  .upload-status.success { color: #2D9D5E; }
+  .upload-status.error { color: #D13B3B; }
+  .save-btn {
+    padding: 0.7rem 2rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--sl-color-accent);
+    color: var(--sl-color-white);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    align-self: flex-start;
+  }
+  .save-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  .save-result {
+    font-size: 0.875rem;
+    padding: 0.5rem 0;
+  }
+  .save-result.success { color: #2D9D5E; }
+  .save-result.error { color: #D13B3B; }
+  .hidden { display: none; }
+  [data-theme='dark'] .save-result.success { color: #4ADE80; }
+  [data-theme='dark'] .save-result.error { color: #F87171; }
+  [data-theme='dark'] .upload-status.success { color: #4ADE80; }
+  [data-theme='dark'] .upload-status.error { color: #F87171; }
+  [data-theme='dark'] .link-card input[type="url"] {
+    border-color: var(--sl-color-gray-4);
+  }
+  [data-theme='dark'] .drop-zone {
+    border-color: var(--sl-color-gray-4);
+  }
+</style>

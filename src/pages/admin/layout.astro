@@ -1,0 +1,241 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  activePage?: string;
+}
+
+const { title, description, activePage = 'index' } = Astro.props;
+
+const navItems = [
+  { id: 'index', label: '首页', href: '/admin' },
+  { id: 'downloads', label: '下载链接', href: '/admin/downloads' },
+  { id: 'payment', label: '支付配置', href: '/admin/payment' },
+  { id: 'members', label: '会员配置', href: '/admin/members' },
+];
+---
+
+<StarlightPage
+  frontmatter={{
+    title,
+    description,
+    template: 'splash',
+  }}
+>
+  <div id="admin-loading" class="status-msg">验证登录状态…</div>
+  <div id="admin-layout" class="admin-layout hidden">
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-logo">⚙️</span>
+        <span class="sidebar-title">管理后台</span>
+      </div>
+      <nav class="sidebar-nav">
+        {navItems.map(item => (
+          <a
+            href={item.href}
+            class={`sidebar-link ${activePage === item.id ? 'active' : ''}`}
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="sidebar-logout">退出登录</button>
+      </div>
+    </aside>
+    <main class="admin-main">
+      <slot />
+    </main>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://wlehkvsxftyxmxelcaps.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_Nz2Ro_4jBthvDwjeQ8m-ww_tT0wYgcF';
+
+    const loadingEl = document.getElementById('admin-loading')!;
+    const layoutEl = document.getElementById('admin-layout')!;
+
+    const token = localStorage.getItem('taskora_admin_token');
+    if (!token) {
+      window.location.href = '/admin-login';
+    } else {
+      fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'apikey': SUPABASE_ANON_KEY,
+        },
+      }).then(res => {
+        if (!res.ok) {
+          localStorage.removeItem('taskora_admin_token');
+          window.location.href = '/admin-login';
+          return;
+        }
+        loadingEl.classList.add('hidden');
+        layoutEl.classList.remove('hidden');
+      }).catch(() => {
+        loadingEl.classList.add('hidden');
+        layoutEl.classList.remove('hidden');
+      });
+    }
+
+    document.getElementById('logout-btn')?.addEventListener('click', () => {
+      localStorage.removeItem('taskora_admin_token');
+      window.location.href = '/admin-login';
+    });
+  </script>
+
+  <style>
+    .status-msg {
+      color: var(--sl-color-gray-2);
+      text-align: center;
+      padding: 2rem;
+    }
+    .admin-layout {
+      display: flex;
+      min-height: calc(100vh - 100px);
+      gap: 0;
+    }
+    .admin-sidebar {
+      width: 200px;
+      flex-shrink: 0;
+      background: var(--sl-color-bg-nav);
+      border: 1px solid var(--sl-color-gray-5);
+      border-radius: 12px;
+      padding: 1.25rem 0;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 1.5rem;
+      align-self: flex-start;
+    }
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0 1.25rem 1rem;
+      border-bottom: 1px solid var(--sl-color-gray-5);
+    }
+    .sidebar-logo {
+      font-size: 1.25rem;
+    }
+    .sidebar-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--sl-color-text);
+    }
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      padding: 0.75rem 0;
+      flex: 1;
+    }
+    .sidebar-link {
+      display: block;
+      padding: 0.6rem 1.25rem;
+      color: var(--sl-color-gray-2);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+      border-left: 3px solid transparent;
+    }
+    .sidebar-link:hover {
+      color: var(--sl-color-text);
+      background: var(--sl-color-bg-sidebar);
+    }
+    .sidebar-link.active {
+      color: var(--sl-color-accent);
+      background: var(--sl-color-bg-sidebar);
+      border-left-color: var(--sl-color-accent);
+      font-weight: 600;
+    }
+    .sidebar-footer {
+      padding: 0.75rem 1.25rem 0;
+      border-top: 1px solid var(--sl-color-gray-5);
+    }
+    .sidebar-logout {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid var(--sl-color-gray-5);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--sl-color-gray-2);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .sidebar-logout:hover {
+      border-color: #D13B3B;
+      color: #D13B3B;
+    }
+    .admin-main {
+      flex: 1;
+      padding: 0 1.5rem;
+      min-width: 0;
+    }
+    .hidden { display: none; }
+
+    [data-theme='dark'] .admin-sidebar {
+      border-color: var(--sl-color-gray-4);
+    }
+    [data-theme='dark'] .sidebar-link:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    [data-theme='dark'] .sidebar-link.active {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    [data-theme='dark'] .sidebar-logout:hover {
+      border-color: #F87171;
+      color: #F87171;
+    }
+
+    @media (max-width: 768px) {
+      .admin-layout {
+        flex-direction: column;
+      }
+      .admin-sidebar {
+        width: 100%;
+        position: static;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 0.75rem;
+        gap: 0.5rem;
+      }
+      .sidebar-header {
+        padding: 0 0.5rem;
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+      .sidebar-nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 0.5rem 0 0;
+        gap: 0;
+      }
+      .sidebar-link {
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        padding: 0.5rem 0.75rem;
+      }
+      .sidebar-link.active {
+        border-left-color: transparent;
+        border-bottom-color: var(--sl-color-accent);
+      }
+      .sidebar-footer {
+        padding: 0.5rem 0 0;
+        border-top: none;
+        margin-left: auto;
+      }
+      .sidebar-logout {
+        width: auto;
+        padding: 0.4rem 0.75rem;
+      }
+      .admin-main {
+        padding: 1rem 0;
+      }
+    }
+  </style>
+</StarlightPage>

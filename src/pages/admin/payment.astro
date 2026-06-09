@@ -1,0 +1,417 @@
+---
+import AdminLayout from './layout.astro';
+---
+
+<AdminLayout title="支付配置" description="支付宝配置和订单管理" activePage="payment">
+  <div class="payment-header">
+    <p class="admin-hint">配置支付宝参数，查看支付订单记录。</p>
+  </div>
+
+  <!-- 支付宝配置表单 -->
+  <form id="payment-form" class="links-form">
+    <div class="section-title">💳 支付宝配置</div>
+    <div class="link-card">
+      <div class="link-label">AppID（16位数字）</div>
+      <input type="text" id="field-alipay-appid" placeholder="2088xxxxxxxxxxxxxxx" autocomplete="off" />
+    </div>
+    <div class="link-card">
+      <div class="link-label">应用私钥（PKCS8 格式）</div>
+      <textarea id="field-alipay-private-key" rows="4" placeholder="（已设置，留空则不修改）" autocomplete="off" class="config-textarea"></textarea>
+    </div>
+    <div class="link-card">
+      <div class="link-label">支付宝公钥（平台公钥，非应用公钥）</div>
+      <textarea id="field-alipay-public-key" rows="4" placeholder="（已设置，留空则不修改）" autocomplete="off" class="config-textarea"></textarea>
+    </div>
+    <button type="submit" class="save-btn" id="payment-save-btn">保存支付配置</button>
+    <div id="payment-save-result" class="save-result hidden"></div>
+  </form>
+
+  <hr class="section-divider" />
+
+  <!-- 订单管理 -->
+  <div class="links-form">
+    <div class="section-title">📋 支付明细</div>
+    <div class="orders-toolbar">
+      <select id="orders-status-filter" class="orders-filter">
+        <option value="">全部状态</option>
+        <option value="pending">待支付</option>
+        <option value="paid">已支付</option>
+        <option value="closed">已关闭</option>
+      </select>
+      <button id="orders-refresh-btn" class="orders-refresh-btn">刷新</button>
+      <span id="orders-count" class="orders-count"></span>
+    </div>
+    <div id="orders-loading" class="orders-loading">加载中…</div>
+    <div id="orders-table-wrap" class="hidden">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>订单号</th>
+            <th>套餐</th>
+            <th>金额</th>
+            <th>状态</th>
+            <th>创建时间</th>
+            <th>支付时间</th>
+          </tr>
+        </thead>
+        <tbody id="orders-tbody"></tbody>
+      </table>
+    </div>
+    <div id="orders-empty" class="orders-empty hidden">暂无记录</div>
+    <div id="orders-error" class="save-result error hidden"></div>
+  </div>
+</AdminLayout>
+
+<script>
+  const SUPABASE_URL = 'https://wlehkvsxftyxmxelcaps.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_Nz2Ro_4jBthvDwjeQ8m-ww_tT0wYgcF';
+
+  // --- 支付配置 ---
+  async function initPaymentConfig(token: string) {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/app_config?key=in.(alipay_app_id,alipay_private_key,alipay_public_key)&select=key,value`,
+      { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` } }
+    );
+    if (res.status === 401) {
+      localStorage.removeItem('taskora_admin_token');
+      window.location.href = '/admin-login';
+      return;
+    }
+    const rows: { key: string; value: string }[] = await res.json();
+    const cfg: Record<string, string> = {};
+    for (const r of rows) cfg[r.key] = r.value;
+
+    const appidEl = document.getElementById('field-alipay-appid') as HTMLInputElement;
+    if (appidEl && cfg.alipay_app_id) appidEl.value = cfg.alipay_app_id;
+    
+    const privateKeyEl = document.getElementById('field-alipay-private-key') as HTMLTextAreaElement;
+    const publicKeyEl = document.getElementById('field-alipay-public-key') as HTMLTextAreaElement;
+    if (privateKeyEl && cfg.alipay_private_key) privateKeyEl.placeholder = '（已设置，留空则不修改）';
+    if (publicKeyEl && cfg.alipay_public_key) publicKeyEl.placeholder = '（已设置，留空则不修改）';
+  }
+
+  document.getElementById('payment-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('taskora_admin_token');
+    if (!token) { window.location.href = '/admin-login'; return; }
+
+    const btn = document.getElementById('payment-save-btn') as HTMLButtonElement;
+    const resultEl = document.getElementById('payment-save-result')!;
+    btn.disabled = true;
+    btn.textContent = '保存中…';
+    resultEl.classList.add('hidden');
+
+    const appid = (document.getElementById('field-alipay-appid') as HTMLInputElement).value.trim();
+    const privateKey = (document.getElementById('field-alipay-private-key') as HTMLTextAreaElement).value.trim();
+    const publicKey = (document.getElementById('field-alipay-public-key') as HTMLTextAreaElement).value.trim();
+
+    const records: { key: string; value: string }[] = [];
+    if (appid) records.push({ key: 'alipay_app_id', value: appid });
+    if (privateKey) records.push({ key: 'alipay_private_key', value: privateKey });
+    if (publicKey) records.push({ key: 'alipay_public_key', value: publicKey });
+    records.push({ key: 'alipay_gateway', value: 'https://openapi.alipay.com/gateway.do' });
+    records.push({ key: 'alipay_notify_url', value: 'https://wlehkvsxftyxmxelcaps.supabase.co/functions/v1/alipay-notify' });
+
+    if (records.length === 2) {
+      btn.disabled = false;
+      btn.textContent = '保存支付配置';
+      resultEl.textContent = '请至少填写 AppID、私钥或公钥';
+      resultEl.className = 'save-result error';
+      resultEl.classList.remove('hidden');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/app_config`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${token}`,
+          'Prefer': 'resolution=merge-duplicates',
+        },
+        body: JSON.stringify(records),
+      });
+      if (res.status === 401) {
+        localStorage.removeItem('taskora_admin_token');
+        window.location.href = '/admin-login';
+        return;
+      }
+      if (!res.ok) throw new Error(`保存失败 (${res.status})`);
+
+      resultEl.textContent = '✓ 支付配置已保存';
+      resultEl.className = 'save-result success';
+      (document.getElementById('field-alipay-private-key') as HTMLTextAreaElement).value = '';
+      (document.getElementById('field-alipay-private-key') as HTMLTextAreaElement).placeholder = '（已设置，留空则不修改）';
+      (document.getElementById('field-alipay-public-key') as HTMLTextAreaElement).value = '';
+      (document.getElementById('field-alipay-public-key') as HTMLTextAreaElement).placeholder = '（已设置，留空则不修改）';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      resultEl.textContent = `✗ ${msg}`;
+      resultEl.className = 'save-result error';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '保存支付配置';
+      resultEl.classList.remove('hidden');
+    }
+  });
+
+  // --- 订单管理 ---
+  const PLAN_LABELS: Record<string, string> = {
+    vip_monthly: '月度 VIP',
+    vip_yearly: '年度 VIP',
+  };
+  const STATUS_LABELS: Record<string, string> = {
+    pending: '待支付',
+    paid: '已支付',
+    closed: '已关闭',
+  };
+  const STATUS_CLASS: Record<string, string> = {
+    pending: 'status-pending',
+    paid: 'status-paid',
+    closed: 'status-closed',
+  };
+
+  function formatDatetime(iso: string | null): string {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  }
+
+  async function loadOrders(token: string) {
+    const statusFilter = (document.getElementById('orders-status-filter') as HTMLSelectElement).value;
+    const loadingEl = document.getElementById('orders-loading')!;
+    const tableWrap = document.getElementById('orders-table-wrap')!;
+    const emptyEl = document.getElementById('orders-empty')!;
+    const errorEl = document.getElementById('orders-error')!;
+    const tbody = document.getElementById('orders-tbody')!;
+    const countEl = document.getElementById('orders-count')!;
+
+    loadingEl.classList.remove('hidden');
+    tableWrap.classList.add('hidden');
+    emptyEl.classList.add('hidden');
+    errorEl.classList.add('hidden');
+
+    try {
+      let url = `${SUPABASE_URL}/rest/v1/payment_orders?select=out_trade_no,plan,amount,status,created_at,paid_at&order=created_at.desc&limit=100`;
+      if (statusFilter) url += `&status=eq.${statusFilter}`;
+
+      const res = await fetch(url, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (res.status === 401) {
+        localStorage.removeItem('taskora_admin_token');
+        window.location.href = '/admin-login';
+        return;
+      }
+      if (!res.ok) throw new Error(`请求失败 (${res.status})`);
+
+      const orders: { out_trade_no: string; plan: string; amount: string; status: string; created_at: string; paid_at: string | null }[] = await res.json();
+
+      loadingEl.classList.add('hidden');
+      countEl.textContent = `共 ${orders.length} 条`;
+
+      if (orders.length === 0) {
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+
+      tbody.innerHTML = orders.map(o => `
+        <tr>
+          <td class="order-no" title="${o.out_trade_no}">${o.out_trade_no.slice(-12)}</td>
+          <td>${PLAN_LABELS[o.plan] || o.plan}</td>
+          <td>¥${o.amount}</td>
+          <td><span class="status-badge ${STATUS_CLASS[o.status] || ''}">${STATUS_LABELS[o.status] || o.status}</span></td>
+          <td>${formatDatetime(o.created_at)}</td>
+          <td>${formatDatetime(o.paid_at)}</td>
+        </tr>
+      `).join('');
+      tableWrap.classList.remove('hidden');
+    } catch (err: unknown) {
+      loadingEl.classList.add('hidden');
+      errorEl.textContent = `加载失败：${err instanceof Error ? err.message : String(err)}`;
+      errorEl.classList.remove('hidden');
+    }
+  }
+
+  document.getElementById('orders-refresh-btn')?.addEventListener('click', () => {
+    const token = localStorage.getItem('taskora_admin_token');
+    if (token) loadOrders(token);
+  });
+  document.getElementById('orders-status-filter')?.addEventListener('change', () => {
+    const token = localStorage.getItem('taskora_admin_token');
+    if (token) loadOrders(token);
+  });
+
+  // Initialize
+  const token = localStorage.getItem('taskora_admin_token');
+  if (token) {
+    initPaymentConfig(token);
+    loadOrders(token);
+  }
+</script>
+
+<style>
+  .payment-header {
+    margin-bottom: 1.5rem;
+  }
+  .admin-hint {
+    color: var(--sl-color-gray-2);
+    font-size: 0.875rem;
+    margin: 0;
+  }
+  .links-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 640px;
+  }
+  .link-card {
+    background: var(--sl-color-bg-nav);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .link-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--sl-color-text);
+  }
+  .link-card input[type="text"] {
+    padding: 0.55rem 0.85rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 8px;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    font-size: 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .link-card input[type="text"]:focus {
+    outline: 2px solid var(--sl-color-accent);
+    outline-offset: 1px;
+  }
+  .config-textarea {
+    padding: 0.55rem 0.85rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 8px;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    font-size: 0.85rem;
+    font-family: monospace;
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+  }
+  .config-textarea:focus {
+    outline: 2px solid var(--sl-color-accent);
+    outline-offset: 1px;
+  }
+  .save-btn {
+    padding: 0.7rem 2rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--sl-color-accent);
+    color: var(--sl-color-white);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    align-self: flex-start;
+  }
+  .save-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  .save-result {
+    font-size: 0.875rem;
+    padding: 0.5rem 0;
+  }
+  .save-result.success { color: #2D9D5E; }
+  .save-result.error { color: #D13B3B; }
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--sl-color-gray-5);
+    margin: 2rem 0;
+    max-width: 640px;
+  }
+  .section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--sl-color-text);
+    margin-bottom: 0.25rem;
+  }
+  .orders-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .orders-filter {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 8px;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+  .orders-refresh-btn {
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--sl-color-text);
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+  .orders-refresh-btn:hover { border-color: var(--sl-color-accent); color: var(--sl-color-accent); }
+  .orders-count { font-size: 0.8rem; color: var(--sl-color-gray-2); }
+  .orders-loading { font-size: 0.875rem; color: var(--sl-color-gray-2); padding: 1rem 0; }
+  .orders-empty { font-size: 0.875rem; color: var(--sl-color-gray-2); padding: 1rem 0; }
+  .orders-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .orders-table th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 2px solid var(--sl-color-gray-5);
+    color: var(--sl-color-gray-2);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .orders-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--sl-color-gray-6);
+    vertical-align: middle;
+  }
+  .orders-table tr:last-child td { border-bottom: none; }
+  .order-no { font-family: monospace; font-size: 0.8rem; color: var(--sl-color-gray-2); }
+  .status-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .status-pending { background: #FEF9C3; color: #854D0E; }
+  .status-paid    { background: #DCFCE7; color: #166534; }
+  .status-closed  { background: #F1F5F9; color: #64748B; }
+  [data-theme='dark'] .status-pending { background: #422006; color: #FCD34D; }
+  [data-theme='dark'] .status-paid    { background: #052e16; color: #4ADE80; }
+  [data-theme='dark'] .status-closed  { background: #1E293B; color: #94A3B8; }
+  .hidden { display: none; }
+  [data-theme='dark'] .save-result.success { color: #4ADE80; }
+  [data-theme='dark'] .save-result.error { color: #F87171; }
+  [data-theme='dark'] .link-card input[type="text"] {
+    border-color: var(--sl-color-gray-4);
+  }
+  [data-theme='dark'] .config-textarea {
+    border-color: var(--sl-color-gray-4);
+  }
+</style>
