@@ -9,7 +9,7 @@ import AdminLayout from './layout.astro';
 
   <form id="links-form" class="links-form">
     <div class="link-card">
-      <div class="link-label">📱 Android APK 直链</div>
+      <div class="link-label"><svg class="section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg> Android APK 直链</div>
       <input type="file" id="file-input-apk" accept=".apk" class="hidden" />
       <div id="drop-zone-apk" class="drop-zone" data-platform="android_apk" data-filename="taskora-latest.apk">
         <div class="drop-zone-hint">拖拽文件到此处，或点击选择文件</div>
@@ -18,11 +18,11 @@ import AdminLayout from './layout.astro';
       <div id="upload-status-apk" class="upload-status hidden"></div>
     </div>
     <div class="link-card">
-      <div class="link-label">📱 小米应用商店链接</div>
+      <div class="link-label"><svg class="section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg> 小米应用商店链接</div>
       <input type="url" id="field-android-xiaomi" name="android_xiaomi" placeholder="https://app.mi.com/details?id=..." />
     </div>
     <div class="link-card">
-      <div class="link-label">💻 Windows ZIP 直链</div>
+      <div class="link-label"><svg class="section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg> Windows ZIP 直链</div>
       <input type="file" id="file-input-zip" accept=".zip" class="hidden" />
       <div id="drop-zone-zip" class="drop-zone" data-platform="windows_zip" data-filename="taskora-latest.zip">
         <div class="drop-zone-hint">拖拽文件到此处，或点击选择文件</div>
@@ -31,7 +31,7 @@ import AdminLayout from './layout.astro';
       <div id="upload-status-zip" class="upload-status hidden"></div>
     </div>
     <div class="link-card">
-      <div class="link-label">🌐 Web 在线版网址</div>
+      <div class="link-label"><svg class="section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> Web 在线版网址</div>
       <input type="url" id="field-web" name="web" placeholder="https://app.taskora.com" />
     </div>
 
@@ -379,7 +379,14 @@ import AdminLayout from './layout.astro';
   [data-theme='dark'] .link-card input[type="url"] {
     border-color: var(--sl-color-gray-4);
   }
-  [data-theme='dark'] .drop-zone {
-    border-color: var(--sl-color-gray-4);
-  }
-</style>
+   [data-theme='dark'] .drop-zone {
+     border-color: var(--sl-color-gray-4);
+   }
+
+   /* ====== Responsive ====== */
+   @media (max-width: 768px) {
+     .links-form { max-width: 100%; }
+     .drop-zone { padding: 1rem 0.75rem; }
+     .save-btn { width: 100%; justify-content: center; }
+   }
+ </style>

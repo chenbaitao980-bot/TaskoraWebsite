@@ -58,3 +58,38 @@ For the homepage (`index.mdx`), use the `splash` template with `hero` config.
 - Do NOT create a separate `.astro` component file unless a UI element is reused across 3+ pages
 - Do NOT import external UI component libraries (no shadcn, no Radix, etc.)
 - Do NOT use inline `style=""` attributes — use the `<style>` block
+- Do NOT use emoji as section icons — use inline SVG with class `section-icon` (Lucide/Heroicons style)
+
+## Icon Convention
+
+### Section Title Icons
+
+All admin pages use inline SVG icons in `.section-title` blocks:
+
+```astro
+<div class="section-title">
+  <svg class="section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- icon paths -->
+  </svg>
+  标题文字
+</div>
+```
+
+### SVG Icon Rules
+
+- **No emoji** — replace all emoji with inline SVG
+- **`viewBox="0 0 24 24"`** — standard 24×24 grid
+- **`fill="none" stroke="currentColor" stroke-width="2"`** — consistent stroke weight
+- **`stroke-linecap="round" stroke-linejoin="round"`** — rounded stroke ends
+- **Icons should be semantically meaningful** (Wrench for settings/features, Gift for bonuses, etc.)
+- **Reuse** the same icon for the same semantic concept across all pages
+
+### Global Icon Styles
+
+Defined in `layout.astro` `<style>`:
+
+```css
+.section-icon { color: var(--sl-color-accent); opacity: 0.85; flex-shrink: 0; }
+```
+
+This ensures consistent color (accent) and spacing across all admin pages.

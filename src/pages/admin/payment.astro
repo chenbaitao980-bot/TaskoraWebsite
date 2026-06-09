@@ -9,7 +9,7 @@ import AdminLayout from './layout.astro';
 
   <!-- 支付宝配置表单 -->
   <form id="payment-form" class="links-form">
-    <div class="section-title">💳 支付宝配置</div>
+    <div class="section-title"><svg class="section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> 支付宝配置</div>
     <div class="link-card">
       <div class="link-label">AppID（16位数字）</div>
       <input type="text" id="field-alipay-appid" placeholder="2088xxxxxxxxxxxxxxx" autocomplete="off" />
@@ -30,7 +30,7 @@ import AdminLayout from './layout.astro';
 
   <!-- 订单管理 -->
   <div class="links-form">
-    <div class="section-title">📋 支付明细</div>
+    <div class="section-title"><svg class="section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> 支付明细</div>
     <div class="orders-toolbar">
       <select id="orders-status-filter" class="orders-filter">
         <option value="">全部状态</option>
@@ -325,10 +325,16 @@ import AdminLayout from './layout.astro';
     cursor: pointer;
     align-self: flex-start;
   }
-  .save-btn:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
+   .save-btn:disabled {
+     opacity: 0.6;
+     cursor: default;
+   }
+   .save-btn:hover:not(:disabled) {
+     filter: brightness(1.1);
+   }
+   .save-btn:active:not(:disabled) {
+     transform: scale(0.98);
+   }
   .save-result {
     font-size: 0.875rem;
     padding: 0.5rem 0;
@@ -376,7 +382,7 @@ import AdminLayout from './layout.astro';
   .orders-count { font-size: 0.8rem; color: var(--sl-color-gray-2); }
   .orders-loading { font-size: 0.875rem; color: var(--sl-color-gray-2); padding: 1rem 0; }
   .orders-empty { font-size: 0.875rem; color: var(--sl-color-gray-2); padding: 1rem 0; }
-  .orders-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+   .orders-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; background: var(--sl-color-bg-nav); border-radius: 12px; border: 1px solid var(--sl-color-gray-5); overflow: hidden; }
   .orders-table th {
     text-align: left;
     padding: 0.5rem 0.75rem;
@@ -384,13 +390,27 @@ import AdminLayout from './layout.astro';
     color: var(--sl-color-gray-2);
     font-weight: 600;
     white-space: nowrap;
+    background: var(--sl-color-bg);
+    font-size: 0.78rem;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
   }
   .orders-table td {
     padding: 0.5rem 0.75rem;
     border-bottom: 1px solid var(--sl-color-gray-6);
     vertical-align: middle;
+    color: var(--sl-color-text);
+    line-height: 1.5;
+  }
+  .orders-table tbody tr {
+    transition: background-color 0.1s ease;
+  }
+  .orders-table tbody tr:hover {
+    background: rgba(var(--sl-color-accent-rgb,79,70,229), 0.025);
   }
   .orders-table tr:last-child td { border-bottom: none; }
+  .orders-table tr:last-child td:first-child { border-bottom-left-radius: 0; }
+  .orders-table tr:last-child td:last-child { border-bottom-right-radius: 0; }
   .order-no { font-family: monospace; font-size: 0.8rem; color: var(--sl-color-gray-2); }
   .status-badge {
     display: inline-block;
@@ -411,7 +431,15 @@ import AdminLayout from './layout.astro';
   [data-theme='dark'] .link-card input[type="text"] {
     border-color: var(--sl-color-gray-4);
   }
-  [data-theme='dark'] .config-textarea {
-    border-color: var(--sl-color-gray-4);
-  }
-</style>
+   [data-theme='dark'] .config-textarea {
+     border-color: var(--sl-color-gray-4);
+   }
+
+   /* ====== Responsive ====== */
+   @media (max-width: 768px) {
+     .orders-toolbar { flex-direction: column; align-items: stretch; }
+     .orders-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+     .links-form { max-width: 100%; }
+     .save-btn, .orders-refresh-btn { width: 100%; justify-content: center; }
+   }
+ </style>
