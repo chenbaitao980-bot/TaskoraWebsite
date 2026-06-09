@@ -88,6 +88,17 @@ const navItems = [
   </script>
 
   <style>
+    /* Override Starlight splash hero grid — default goes 7fr 4fr at 50rem+, leaving blank right column */
+    :global(.hero) {
+      display: block !important;
+      padding-block: 1rem !important;
+    }
+    :global(.hero > .copy),
+    :global(.sl-content-wrapper) {
+      max-width: 100% !important;
+      text-align: start !important;
+    }
+
     .status-msg {
       color: var(--sl-color-gray-2);
       text-align: center;
