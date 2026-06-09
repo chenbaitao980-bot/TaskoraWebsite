@@ -141,6 +141,10 @@ import AdminLayout from './layout.astro';
           <option value="">全部适用</option>
         </select>
       </div>
+      <div class="link-card">
+        <div class="link-label">折扣说明（可选，向用户解释享受折扣的原因）</div>
+        <input type="text" id="discount-description" placeholder="例：首次购买专属优惠" />
+      </div>
       <div class="link-card toggle-card">
         <label class="toggle-label">
           <input type="checkbox" id="discount-active" checked />
@@ -473,6 +477,7 @@ import AdminLayout from './layout.astro';
     type_id: string | null;
     active: boolean;
     used_count: number;
+    description: string | null;
   }
 
   async function loadDiscounts(token: string) {
@@ -593,6 +598,7 @@ import AdminLayout from './layout.astro';
       codeEl.dataset.auto = 'false';
       (document.getElementById('discount-percent') as HTMLInputElement).value = String(code.percent);
       (document.getElementById('discount-active') as HTMLInputElement).checked = code.active;
+      (document.getElementById('discount-description') as HTMLInputElement).value = code.description ?? '';
     } else {
       title.textContent = '添加折扣码';
       (document.getElementById('discount-form') as HTMLFormElement).reset();
@@ -630,11 +636,13 @@ import AdminLayout from './layout.astro';
 
     const id = (document.getElementById('discount-id') as HTMLInputElement).value;
     const typeIdRaw = (document.getElementById('discount-type-id') as HTMLSelectElement).value;
+    const descriptionRaw = (document.getElementById('discount-description') as HTMLInputElement).value.trim();
     const payload = {
       code: (document.getElementById('discount-code') as HTMLInputElement).value.trim().toUpperCase(),
       percent: parseInt((document.getElementById('discount-percent') as HTMLInputElement).value, 10),
       type_id: typeIdRaw || null,
       active: (document.getElementById('discount-active') as HTMLInputElement).checked,
+      description: descriptionRaw || null,
     };
 
     try {
