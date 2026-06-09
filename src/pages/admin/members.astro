@@ -248,7 +248,7 @@ import AdminLayout from './layout.astro';
 
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/member_types?select=*,user_count:user_subscriptions(count)&order=sort_order.asc`,
+        `${SUPABASE_URL}/rest/v1/member_types?select=*&order=sort_order.asc`,
         { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` } }
       );
       if (res.status === 401) {
@@ -261,24 +261,42 @@ import AdminLayout from './layout.astro';
       const types: MemberType[] = await res.json();
       allTypes = types;
 
+      // 获取各类型用户数（user_subscriptions 无 FK，单独计数）
+      let userCountMap: Record<string, number> = {};
+      try {
+        const countRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/user_subscriptions?select=plan,user_id`,
+          { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` } }
+        );
+        if (countRes.ok) {
+          const subs = await countRes.json() as { plan: string; user_id: string }[];
+          for (const sub of subs) {
+            if (!sub.plan) continue;
+            userCountMap[sub.plan] = (userCountMap[sub.plan] || 0) + 1;
+          }
+        }
+      } catch { /* ignore count error */ }
+
       loadingEl.classList.add('hidden');
       if (types.length === 0) {
         emptyEl.classList.remove('hidden');
         return;
       }
 
-      tbody.innerHTML = types.map(t => `
+      tbody.innerHTML = types.map(t => {
+        const count = userCountMap[t.id] ?? 0;
+        return `
         <tr>
           <td>${escapeHtml(t.name)}</td>
           <td>¥${t.price}</td>
           <td>${t.duration_days}</td>
-          <td>${t.user_count ?? 0}</td>
+          <td>${count}</td>
           <td>
             <button class="edit-btn" data-id="${t.id}">编辑</button>
-            <button class="delete-btn" data-id="${t.id}" data-name="${escapeHtml(t.name)}" data-count="${t.user_count ?? 0}">删除</button>
+            <button class="delete-btn" data-id="${t.id}" data-name="${escapeHtml(t.name)}" data-count="${count}">删除</button>
           </td>
-        </tr>
-      `).join('');
+        </tr>`;
+      }).join('');
 
       // Bind edit/delete buttons
       tbody.querySelectorAll('.edit-btn').forEach(btn => {
