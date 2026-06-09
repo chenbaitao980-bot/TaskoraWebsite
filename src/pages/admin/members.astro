@@ -32,72 +32,6 @@ import AdminLayout from './layout.astro';
 
   <hr class="section-divider" />
 
-  <!-- 会员类型编辑表单 -->
-  <div id="type-form-section" class="hidden">
-    <div class="section-title" id="type-form-title">添加会员类型</div>
-    <form id="type-form" class="links-form">
-      <input type="hidden" id="type-id" />
-      <div class="link-card">
-        <div class="link-label">名称</div>
-        <input type="text" id="type-name" placeholder="例：月度 VIP" required />
-      </div>
-      <div class="link-card">
-        <div class="link-label">价格（元）</div>
-        <input type="number" id="type-price" step="0.01" min="0" placeholder="9.9" required />
-      </div>
-      <div class="link-card">
-        <div class="link-label">时长（天）</div>
-        <input type="number" id="type-duration" min="1" placeholder="30" required />
-      </div>
-
-      <div class="section-title" style="margin-top: 1rem;"><svg class="section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> 功能权限</div>
-      <div class="link-card toggle-card">
-        <label class="toggle-label">
-          <input type="checkbox" id="type-ai-decompose" checked />
-          <span>AI 分解</span>
-        </label>
-      </div>
-      <div class="link-card toggle-card">
-        <label class="toggle-label">
-          <input type="checkbox" id="type-data-export" checked />
-          <span>数据导出</span>
-        </label>
-      </div>
-      <div class="link-card">
-        <div class="link-label">最大项目数（-1 为无限制）</div>
-        <input type="number" id="type-max-projects" min="-1" placeholder="-1" />
-      </div>
-      <div class="link-card">
-        <div class="link-label">最大任务数（-1 为无限制）</div>
-        <input type="number" id="type-max-tasks" min="-1" placeholder="-1" />
-      </div>
-
-      <div class="section-title" style="margin-top: 1rem;"><svg class="section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg> 其他配置</div>
-      <div class="link-card toggle-card">
-        <label class="toggle-label">
-          <input type="checkbox" id="type-auto-renew" />
-          <span>支持自动续费</span>
-        </label>
-      </div>
-      <div class="link-card">
-        <div class="link-label">试用期（天，0 为无试用）</div>
-        <input type="number" id="type-trial-days" min="0" placeholder="0" />
-      </div>
-      <div class="link-card">
-        <div class="link-label">邀请返利比例（0-100%）</div>
-        <input type="number" id="type-referral-bonus" min="0" max="100" placeholder="0" />
-      </div>
-
-      <div class="form-actions">
-        <button type="submit" class="save-btn" id="type-save-btn">保存</button>
-        <button type="button" class="cancel-btn" id="type-cancel-btn">取消</button>
-      </div>
-      <div id="type-save-result" class="save-result hidden"></div>
-    </form>
-  </div>
-
-  <hr class="section-divider" />
-
   <!-- 折扣码管理 -->
   <div class="section-title">
     <svg class="section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
@@ -122,43 +56,6 @@ import AdminLayout from './layout.astro';
   <div id="discounts-empty" class="orders-empty hidden">暂无折扣码</div>
   <button id="add-discount-btn" class="save-btn" style="margin-top: 1rem;">+ 添加折扣码</button>
 
-  <!-- 折扣码编辑表单 -->
-  <div id="discount-form-section" class="hidden" style="margin-top: 1rem;">
-    <div class="section-title" id="discount-form-title">添加折扣码</div>
-    <form id="discount-form" class="links-form">
-      <input type="hidden" id="discount-id" />
-      <div class="link-card">
-        <div class="link-label">折扣码（可手动修改）</div>
-        <input type="text" id="discount-code" placeholder="选择会员类型后自动生成" required data-auto="true" />
-      </div>
-      <div class="link-card">
-        <div class="link-label">折扣比例（1-100，例：80 表示八折）</div>
-        <input type="number" id="discount-percent" min="1" max="100" placeholder="80" required />
-      </div>
-      <div class="link-card">
-        <div class="link-label">适用会员类型（留空则全部适用）</div>
-        <select id="discount-type-id">
-          <option value="">全部适用</option>
-        </select>
-      </div>
-      <div class="link-card">
-        <div class="link-label">折扣说明（可选，向用户解释享受折扣的原因）</div>
-        <input type="text" id="discount-description" placeholder="例：首次购买专属优惠" />
-      </div>
-      <div class="link-card toggle-card">
-        <label class="toggle-label">
-          <input type="checkbox" id="discount-active" checked />
-          <span>启用</span>
-        </label>
-      </div>
-      <div class="form-actions">
-        <button type="submit" class="save-btn" id="discount-save-btn">保存</button>
-        <button type="button" class="cancel-btn" id="discount-cancel-btn">取消</button>
-      </div>
-      <div id="discount-save-result" class="save-result hidden"></div>
-    </form>
-  </div>
-
   <hr class="section-divider" />
 
   <!-- 充值梯度管理 -->
@@ -179,31 +76,6 @@ import AdminLayout from './layout.astro';
   </div>
   <div id="tiers-empty" class="orders-empty hidden">暂无充值梯度</div>
   <button id="add-tier-btn" class="save-btn" style="margin-top: 1rem;">+ 添加充值梯度</button>
-
-  <!-- 充值梯度编辑表单 -->
-  <div id="tier-form-section" class="hidden" style="margin-top: 1rem;">
-    <div class="section-title" id="tier-form-title">添加充值梯度</div>
-    <form id="tier-form" class="links-form">
-      <input type="hidden" id="tier-id" />
-      <div class="link-card">
-        <div class="link-label">充值金额（元）</div>
-        <input type="number" id="tier-amount" step="0.01" min="0" placeholder="10" required />
-      </div>
-      <div class="link-card">
-        <div class="link-label">赠送金额（元）</div>
-        <input type="number" id="tier-bonus" step="0.01" min="0" placeholder="0" />
-      </div>
-      <div class="link-card">
-        <div class="link-label">排序（越小越靠前）</div>
-        <input type="number" id="tier-sort" min="0" placeholder="0" />
-      </div>
-      <div class="form-actions">
-        <button type="submit" class="save-btn" id="tier-save-btn">保存</button>
-        <button type="button" class="cancel-btn" id="tier-cancel-btn">取消</button>
-      </div>
-      <div id="tier-save-result" class="save-result hidden"></div>
-    </form>
-  </div>
 
   <hr class="section-divider" />
 
@@ -226,9 +98,233 @@ import AdminLayout from './layout.astro';
   <div id="logs-empty" class="orders-empty hidden">暂无日志</div>
 </AdminLayout>
 
+<!-- ===== MODAL OVERLAY ===== -->
+<div id="modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-card" id="modal-card">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">标题</span>
+      <button class="modal-close-btn" id="modal-close-btn" aria-label="关闭">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <!-- form content injected here -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== CONFIRM MODAL ===== -->
+<div id="confirm-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-card confirm-card">
+    <div class="modal-header">
+      <span class="modal-title" id="confirm-title">确认删除</span>
+      <button class="modal-close-btn" id="confirm-cancel-x-btn" aria-label="关闭">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-message" class="confirm-message"></p>
+      <div class="form-actions" style="margin-top: 1.5rem;">
+        <button id="confirm-ok-btn" class="delete-confirm-btn">确认删除</button>
+        <button id="confirm-cancel-btn" class="cancel-btn">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FORM TEMPLATES (hidden, cloned into modal) ===== -->
+<template id="type-form-template">
+  <form id="type-form" class="links-form">
+    <input type="hidden" id="type-id" />
+    <div class="link-card">
+      <div class="link-label">名称</div>
+      <input type="text" id="type-name" placeholder="例：月度 VIP" required />
+    </div>
+    <div class="link-card">
+      <div class="link-label">价格（元）</div>
+      <input type="number" id="type-price" step="0.01" min="0" placeholder="9.9" required />
+    </div>
+    <div class="link-card">
+      <div class="link-label">时长（天）</div>
+      <input type="number" id="type-duration" min="1" placeholder="30" required />
+    </div>
+
+    <div class="section-title" style="margin-top: 1rem;"><svg class="section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> 功能权限</div>
+    <div class="link-card toggle-card">
+      <label class="toggle-label">
+        <input type="checkbox" id="type-ai-decompose" checked />
+        <span>AI 分解</span>
+      </label>
+    </div>
+    <div class="link-card toggle-card">
+      <label class="toggle-label">
+        <input type="checkbox" id="type-data-export" checked />
+        <span>数据导出</span>
+      </label>
+    </div>
+    <div class="link-card">
+      <div class="link-label">最大项目数（-1 为无限制）</div>
+      <input type="number" id="type-max-projects" min="-1" placeholder="-1" />
+    </div>
+    <div class="link-card">
+      <div class="link-label">最大任务数（-1 为无限制）</div>
+      <input type="number" id="type-max-tasks" min="-1" placeholder="-1" />
+    </div>
+
+    <div class="section-title" style="margin-top: 1rem;"><svg class="section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg> 其他配置</div>
+    <div class="link-card toggle-card">
+      <label class="toggle-label">
+        <input type="checkbox" id="type-auto-renew" />
+        <span>支持自动续费</span>
+      </label>
+    </div>
+    <div class="link-card">
+      <div class="link-label">试用期（天，0 为无试用）</div>
+      <input type="number" id="type-trial-days" min="0" placeholder="0" />
+    </div>
+    <div class="link-card">
+      <div class="link-label">邀请返利比例（0-100%）</div>
+      <input type="number" id="type-referral-bonus" min="0" max="100" placeholder="0" />
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="save-btn" id="type-save-btn">保存</button>
+      <button type="button" class="cancel-btn" id="type-cancel-btn">取消</button>
+    </div>
+    <div id="type-save-result" class="save-result hidden"></div>
+  </form>
+</template>
+
+<template id="discount-form-template">
+  <form id="discount-form" class="links-form">
+    <input type="hidden" id="discount-id" />
+    <div class="link-card">
+      <div class="link-label">折扣码（可手动修改）</div>
+      <input type="text" id="discount-code" placeholder="选择会员类型后自动生成" required data-auto="true" />
+    </div>
+    <div class="link-card">
+      <div class="link-label">折扣比例（1-100，例：80 表示八折）</div>
+      <input type="number" id="discount-percent" min="1" max="100" placeholder="80" required />
+    </div>
+    <div class="link-card">
+      <div class="link-label">适用会员类型（留空则全部适用）</div>
+      <select id="discount-type-id">
+        <option value="">全部适用</option>
+      </select>
+    </div>
+    <div class="link-card">
+      <div class="link-label">折扣说明（可选，向用户解释享受折扣的原因）</div>
+      <input type="text" id="discount-description" placeholder="例：首次购买专属优惠" />
+    </div>
+    <div class="link-card toggle-card">
+      <label class="toggle-label">
+        <input type="checkbox" id="discount-active" checked />
+        <span>启用</span>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="save-btn" id="discount-save-btn">保存</button>
+      <button type="button" class="cancel-btn" id="discount-cancel-btn">取消</button>
+    </div>
+    <div id="discount-save-result" class="save-result hidden"></div>
+  </form>
+</template>
+
+<template id="tier-form-template">
+  <form id="tier-form" class="links-form">
+    <input type="hidden" id="tier-id" />
+    <div class="link-card">
+      <div class="link-label">充值金额（元）</div>
+      <input type="number" id="tier-amount" step="0.01" min="0" placeholder="10" required />
+    </div>
+    <div class="link-card">
+      <div class="link-label">赠送金额（元）</div>
+      <input type="number" id="tier-bonus" step="0.01" min="0" placeholder="0" />
+    </div>
+    <div class="link-card">
+      <div class="link-label">排序（越小越靠前）</div>
+      <input type="number" id="tier-sort" min="0" placeholder="0" />
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="save-btn" id="tier-save-btn">保存</button>
+      <button type="button" class="cancel-btn" id="tier-cancel-btn">取消</button>
+    </div>
+    <div id="tier-save-result" class="save-result hidden"></div>
+  </form>
+</template>
+
 <script>
   const SUPABASE_URL = 'https://wlehkvsxftyxmxelcaps.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_Nz2Ro_4jBthvDwjeQ8m-ww_tT0wYgcF';
+
+  // ===== Modal helpers =====
+  const modalOverlay = document.getElementById('modal-overlay')!;
+  const modalTitle = document.getElementById('modal-title')!;
+  const modalBody = document.getElementById('modal-body')!;
+  const modalCloseBtn = document.getElementById('modal-close-btn')!;
+
+  function openModal(title: string, templateId: string) {
+    const tpl = document.getElementById(templateId) as HTMLTemplateElement;
+    modalTitle.textContent = title;
+    modalBody.innerHTML = '';
+    modalBody.appendChild(tpl.content.cloneNode(true));
+    modalOverlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    modalOverlay.classList.add('hidden');
+    document.body.style.overflow = '';
+    modalBody.innerHTML = '';
+  }
+
+  modalCloseBtn.addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  // ===== Confirm modal helpers =====
+  const confirmOverlay = document.getElementById('confirm-overlay')!;
+  const confirmTitle = document.getElementById('confirm-title')!;
+  const confirmMessage = document.getElementById('confirm-message')!;
+  const confirmOkBtn = document.getElementById('confirm-ok-btn')!;
+  const confirmCancelBtn = document.getElementById('confirm-cancel-btn')!;
+  const confirmCancelXBtn = document.getElementById('confirm-cancel-x-btn')!;
+
+  let confirmResolve: ((v: boolean) => void) | null = null;
+
+  function showConfirm(title: string, message: string): Promise<boolean> {
+    confirmTitle.textContent = title;
+    confirmMessage.textContent = message;
+    confirmOverlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    return new Promise((resolve) => {
+      confirmResolve = resolve;
+    });
+  }
+
+  function closeConfirm(result: boolean) {
+    confirmOverlay.classList.add('hidden');
+    document.body.style.overflow = '';
+    if (confirmResolve) {
+      confirmResolve(result);
+      confirmResolve = null;
+    }
+  }
+
+  confirmOkBtn.addEventListener('click', () => closeConfirm(true));
+  confirmCancelBtn.addEventListener('click', () => closeConfirm(false));
+  confirmCancelXBtn.addEventListener('click', () => closeConfirm(false));
+  confirmOverlay.addEventListener('click', (e) => {
+    if (e.target === confirmOverlay) closeConfirm(false);
+  });
+
+  // ESC key closes any open modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (!confirmOverlay.classList.contains('hidden')) {
+        closeConfirm(false);
+      } else if (!modalOverlay.classList.contains('hidden')) {
+        closeModal();
+      }
+    }
+  });
 
   // --- 会员类型 ---
   interface MemberType {
@@ -319,7 +415,7 @@ import AdminLayout from './layout.astro';
         });
       });
       tbody.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
           const el = btn as HTMLElement;
           const id = el.dataset.id!;
           const name = el.dataset.name!;
@@ -328,7 +424,8 @@ import AdminLayout from './layout.astro';
             alert(`无法删除「${name}」：该类型仍有 ${count} 个活跃用户。`);
             return;
           }
-          if (confirm(`确定删除「${name}」吗？`)) {
+          const ok = await showConfirm('确认删除', `确定删除「${name}」吗？此操作不可撤销。`);
+          if (ok) {
             deleteType(token, id);
           }
         });
@@ -346,12 +443,11 @@ import AdminLayout from './layout.astro';
   }
 
   function showTypeForm(type?: MemberType) {
-    const section = document.getElementById('type-form-section')!;
-    const title = document.getElementById('type-form-title')!;
-    section.classList.remove('hidden');
+    const titleText = type ? '编辑会员类型' : '添加会员类型';
+    openModal(titleText, 'type-form-template');
 
+    // After cloning template into modal, set values
     if (type) {
-      title.textContent = '编辑会员类型';
       (document.getElementById('type-id') as HTMLInputElement).value = type.id;
       (document.getElementById('type-name') as HTMLInputElement).value = type.name;
       (document.getElementById('type-price') as HTMLInputElement).value = String(type.price);
@@ -363,91 +459,84 @@ import AdminLayout from './layout.astro';
       (document.getElementById('type-auto-renew') as HTMLInputElement).checked = type.auto_renew;
       (document.getElementById('type-trial-days') as HTMLInputElement).value = String(type.trial_days);
       (document.getElementById('type-referral-bonus') as HTMLInputElement).value = String(type.referral_bonus);
-    } else {
-      title.textContent = '添加会员类型';
-      (document.getElementById('type-form') as HTMLFormElement).reset();
-      (document.getElementById('type-id') as HTMLInputElement).value = '';
     }
-    section.scrollIntoView({ behavior: 'smooth' });
+
+    // Cancel button closes modal
+    document.getElementById('type-cancel-btn')?.addEventListener('click', closeModal);
+
+    // Form submit
+    document.getElementById('type-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = localStorage.getItem('taskora_admin_token');
+      if (!token) { window.location.href = '/admin-login'; return; }
+
+      const btn = document.getElementById('type-save-btn') as HTMLButtonElement;
+      const resultEl = document.getElementById('type-save-result')!;
+      btn.disabled = true;
+      btn.textContent = '保存中…';
+      resultEl.classList.add('hidden');
+
+      const id = (document.getElementById('type-id') as HTMLInputElement).value;
+      const payload = {
+        name: (document.getElementById('type-name') as HTMLInputElement).value.trim(),
+        price: parseFloat((document.getElementById('type-price') as HTMLInputElement).value),
+        duration_days: parseInt((document.getElementById('type-duration') as HTMLInputElement).value, 10),
+        ai_decompose: (document.getElementById('type-ai-decompose') as HTMLInputElement).checked,
+        data_export: (document.getElementById('type-data-export') as HTMLInputElement).checked,
+        max_projects: parseInt((document.getElementById('type-max-projects') as HTMLInputElement).value || '-1', 10),
+        max_tasks: parseInt((document.getElementById('type-max-tasks') as HTMLInputElement).value || '-1', 10),
+        auto_renew: (document.getElementById('type-auto-renew') as HTMLInputElement).checked,
+        trial_days: parseInt((document.getElementById('type-trial-days') as HTMLInputElement).value || '0', 10),
+        referral_bonus: parseInt((document.getElementById('type-referral-bonus') as HTMLInputElement).value || '0', 10),
+      };
+
+      try {
+        const url = id
+          ? `${SUPABASE_URL}/rest/v1/member_types?id=eq.${id}`
+          : `${SUPABASE_URL}/rest/v1/member_types`;
+        const method = id ? 'PATCH' : 'POST';
+
+        const res = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${token}`,
+            'Prefer': 'return=representation',
+          },
+          body: JSON.stringify(payload),
+        });
+        if (res.status === 401) {
+          localStorage.removeItem('taskora_admin_token');
+          window.location.href = '/admin-login';
+          return;
+        }
+        if (!res.ok) throw new Error(`保存失败 (${res.status})`);
+
+        const saved = await res.json();
+        await logOperation(token, id ? 'update_type' : 'create_type', `会员类型: ${payload.name}`, JSON.stringify(payload));
+
+        resultEl.textContent = '✓ 保存成功';
+        resultEl.className = 'save-result success';
+        resultEl.classList.remove('hidden');
+
+        await loadTypes(token);
+        setTimeout(() => {
+          closeModal();
+        }, 1000);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        resultEl.textContent = `✗ ${msg}`;
+        resultEl.className = 'save-result error';
+        resultEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '保存';
+      }
+    });
   }
 
   document.getElementById('add-type-btn')?.addEventListener('click', () => showTypeForm());
-  document.getElementById('type-cancel-btn')?.addEventListener('click', () => {
-    document.getElementById('type-form-section')!.classList.add('hidden');
-  });
-
-  document.getElementById('type-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem('taskora_admin_token');
-    if (!token) { window.location.href = '/admin-login'; return; }
-
-    const btn = document.getElementById('type-save-btn') as HTMLButtonElement;
-    const resultEl = document.getElementById('type-save-result')!;
-    btn.disabled = true;
-    btn.textContent = '保存中…';
-    resultEl.classList.add('hidden');
-
-    const id = (document.getElementById('type-id') as HTMLInputElement).value;
-    const payload = {
-      name: (document.getElementById('type-name') as HTMLInputElement).value.trim(),
-      price: parseFloat((document.getElementById('type-price') as HTMLInputElement).value),
-      duration_days: parseInt((document.getElementById('type-duration') as HTMLInputElement).value, 10),
-      ai_decompose: (document.getElementById('type-ai-decompose') as HTMLInputElement).checked,
-      data_export: (document.getElementById('type-data-export') as HTMLInputElement).checked,
-      max_projects: parseInt((document.getElementById('type-max-projects') as HTMLInputElement).value || '-1', 10),
-      max_tasks: parseInt((document.getElementById('type-max-tasks') as HTMLInputElement).value || '-1', 10),
-      auto_renew: (document.getElementById('type-auto-renew') as HTMLInputElement).checked,
-      trial_days: parseInt((document.getElementById('type-trial-days') as HTMLInputElement).value || '0', 10),
-      referral_bonus: parseInt((document.getElementById('type-referral-bonus') as HTMLInputElement).value || '0', 10),
-    };
-
-    try {
-      const url = id
-        ? `${SUPABASE_URL}/rest/v1/member_types?id=eq.${id}`
-        : `${SUPABASE_URL}/rest/v1/member_types`;
-      const method = id ? 'PATCH' : 'POST';
-
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${token}`,
-          'Prefer': 'return=representation',
-        },
-        body: JSON.stringify(payload),
-      });
-      if (res.status === 401) {
-        localStorage.removeItem('taskora_admin_token');
-        window.location.href = '/admin-login';
-        return;
-      }
-      if (!res.ok) throw new Error(`保存失败 (${res.status})`);
-
-      // Log the operation
-      const saved = await res.json();
-      const typeId = id || saved[0]?.id;
-      await logOperation(token, id ? 'update_type' : 'create_type', `会员类型: ${payload.name}`, JSON.stringify(payload));
-
-      resultEl.textContent = '✓ 保存成功';
-      resultEl.className = 'save-result success';
-      resultEl.classList.remove('hidden');
-
-      // Reload
-      await loadTypes(token);
-      setTimeout(() => {
-        document.getElementById('type-form-section')!.classList.add('hidden');
-      }, 1000);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      resultEl.textContent = `✗ ${msg}`;
-      resultEl.className = 'save-result error';
-      resultEl.classList.remove('hidden');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = '保存';
-    }
-  });
 
   async function deleteType(token: string, id: string) {
     try {
@@ -535,7 +624,8 @@ import AdminLayout from './layout.astro';
           const el = btn as HTMLElement;
           const id = el.dataset.id!;
           const code = el.dataset.code!;
-          if (confirm(`确定删除折扣码「${code}」吗？`)) {
+          const ok = await showConfirm('确认删除', `确定删除折扣码「${code}」吗？此操作不可撤销。`);
+          if (ok) {
             await fetch(`${SUPABASE_URL}/rest/v1/member_discount_codes?id=eq.${id}`, {
               method: 'DELETE',
               headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
@@ -555,6 +645,7 @@ import AdminLayout from './layout.astro';
 
   function populateTypeSelect(selectedId?: string | null) {
     const select = document.getElementById('discount-type-id') as HTMLSelectElement;
+    if (!select) return;
     select.innerHTML = '<option value="">全部适用</option>';
     allTypes.forEach(t => {
       const opt = document.createElement('option');
@@ -568,6 +659,7 @@ import AdminLayout from './layout.astro';
   function buildSuggestedCode(): string {
     const select = document.getElementById('discount-type-id') as HTMLSelectElement;
     const percentEl = document.getElementById('discount-percent') as HTMLInputElement;
+    if (!select || !percentEl) return 'CODE';
     const percent = parseInt(percentEl.value, 10);
     const typeId = select.value;
     const type = allTypes.find(t => t.id === typeId);
@@ -578,20 +670,18 @@ import AdminLayout from './layout.astro';
 
   function maybeSuggestCode() {
     const codeEl = document.getElementById('discount-code') as HTMLInputElement;
-    if (codeEl.dataset.auto === 'true') {
+    if (codeEl && codeEl.dataset.auto === 'true') {
       codeEl.value = buildSuggestedCode();
     }
   }
 
   function showDiscountForm(code?: DiscountCode) {
-    const section = document.getElementById('discount-form-section')!;
-    const title = document.getElementById('discount-form-title')!;
-    section.classList.remove('hidden');
+    const titleText = code ? '编辑折扣码' : '添加折扣码';
+    openModal(titleText, 'discount-form-template');
 
     populateTypeSelect(code?.type_id);
 
     if (code) {
-      title.textContent = '编辑折扣码';
       (document.getElementById('discount-id') as HTMLInputElement).value = code.id;
       const codeEl = document.getElementById('discount-code') as HTMLInputElement;
       codeEl.value = code.code;
@@ -600,87 +690,83 @@ import AdminLayout from './layout.astro';
       (document.getElementById('discount-active') as HTMLInputElement).checked = code.active;
       (document.getElementById('discount-description') as HTMLInputElement).value = code.description ?? '';
     } else {
-      title.textContent = '添加折扣码';
-      (document.getElementById('discount-form') as HTMLFormElement).reset();
       (document.getElementById('discount-id') as HTMLInputElement).value = '';
       const codeEl = document.getElementById('discount-code') as HTMLInputElement;
       codeEl.dataset.auto = 'true';
-      populateTypeSelect(null);
     }
-    section.scrollIntoView({ behavior: 'smooth' });
+
+    // Bind auto-suggest events
+    document.getElementById('discount-type-id')?.addEventListener('change', maybeSuggestCode);
+    document.getElementById('discount-percent')?.addEventListener('input', maybeSuggestCode);
+    document.getElementById('discount-code')?.addEventListener('input', (e) => {
+      (e.currentTarget as HTMLInputElement).dataset.auto = 'false';
+    });
+
+    // Cancel button
+    document.getElementById('discount-cancel-btn')?.addEventListener('click', closeModal);
+
+    // Form submit
+    document.getElementById('discount-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = localStorage.getItem('taskora_admin_token');
+      if (!token) { window.location.href = '/admin-login'; return; }
+
+      const btn = document.getElementById('discount-save-btn') as HTMLButtonElement;
+      const resultEl = document.getElementById('discount-save-result')!;
+      btn.disabled = true;
+      btn.textContent = '保存中…';
+      resultEl.classList.add('hidden');
+
+      const id = (document.getElementById('discount-id') as HTMLInputElement).value;
+      const typeIdRaw = (document.getElementById('discount-type-id') as HTMLSelectElement).value;
+      const descriptionRaw = (document.getElementById('discount-description') as HTMLInputElement).value.trim();
+      const payload = {
+        code: (document.getElementById('discount-code') as HTMLInputElement).value.trim().toUpperCase(),
+        percent: parseInt((document.getElementById('discount-percent') as HTMLInputElement).value, 10),
+        type_id: typeIdRaw || null,
+        active: (document.getElementById('discount-active') as HTMLInputElement).checked,
+        description: descriptionRaw || null,
+      };
+
+      try {
+        const url = id
+          ? `${SUPABASE_URL}/rest/v1/member_discount_codes?id=eq.${id}`
+          : `${SUPABASE_URL}/rest/v1/member_discount_codes`;
+        const method = id ? 'PATCH' : 'POST';
+
+        const res = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+        if (res.status === 401) { window.location.href = '/admin-login'; return; }
+        if (!res.ok) throw new Error(`保存失败 (${res.status})`);
+
+        await logOperation(token, id ? 'update_discount' : 'create_discount', `折扣码: ${payload.code}`, JSON.stringify(payload));
+        resultEl.textContent = '✓ 保存成功';
+        resultEl.className = 'save-result success';
+        resultEl.classList.remove('hidden');
+
+        await loadDiscounts(token);
+        setTimeout(() => {
+          closeModal();
+        }, 1000);
+      } catch (err: unknown) {
+        resultEl.textContent = `✗ ${err instanceof Error ? err.message : String(err)}`;
+        resultEl.className = 'save-result error';
+        resultEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '保存';
+      }
+    });
   }
 
   document.getElementById('add-discount-btn')?.addEventListener('click', () => showDiscountForm());
-  document.getElementById('discount-cancel-btn')?.addEventListener('click', () => {
-    document.getElementById('discount-form-section')!.classList.add('hidden');
-  });
-
-  // 自动推荐折扣码：选类型或改比例时更新
-  document.getElementById('discount-type-id')?.addEventListener('change', maybeSuggestCode);
-  document.getElementById('discount-percent')?.addEventListener('input', maybeSuggestCode);
-  // 用户手动编辑折扣码时取消自动推荐
-  document.getElementById('discount-code')?.addEventListener('input', (e) => {
-    (e.currentTarget as HTMLInputElement).dataset.auto = 'false';
-  });
-
-  document.getElementById('discount-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem('taskora_admin_token');
-    if (!token) { window.location.href = '/admin-login'; return; }
-
-    const btn = document.getElementById('discount-save-btn') as HTMLButtonElement;
-    const resultEl = document.getElementById('discount-save-result')!;
-    btn.disabled = true;
-    btn.textContent = '保存中…';
-    resultEl.classList.add('hidden');
-
-    const id = (document.getElementById('discount-id') as HTMLInputElement).value;
-    const typeIdRaw = (document.getElementById('discount-type-id') as HTMLSelectElement).value;
-    const descriptionRaw = (document.getElementById('discount-description') as HTMLInputElement).value.trim();
-    const payload = {
-      code: (document.getElementById('discount-code') as HTMLInputElement).value.trim().toUpperCase(),
-      percent: parseInt((document.getElementById('discount-percent') as HTMLInputElement).value, 10),
-      type_id: typeIdRaw || null,
-      active: (document.getElementById('discount-active') as HTMLInputElement).checked,
-      description: descriptionRaw || null,
-    };
-
-    try {
-      const url = id
-        ? `${SUPABASE_URL}/rest/v1/member_discount_codes?id=eq.${id}`
-        : `${SUPABASE_URL}/rest/v1/member_discount_codes`;
-      const method = id ? 'PATCH' : 'POST';
-
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      if (res.status === 401) { window.location.href = '/admin-login'; return; }
-      if (!res.ok) throw new Error(`保存失败 (${res.status})`);
-
-      await logOperation(token, id ? 'update_discount' : 'create_discount', `折扣码: ${payload.code}`, JSON.stringify(payload));
-      resultEl.textContent = '✓ 保存成功';
-      resultEl.className = 'save-result success';
-      resultEl.classList.remove('hidden');
-
-      await loadDiscounts(token);
-      setTimeout(() => {
-        document.getElementById('discount-form-section')!.classList.add('hidden');
-      }, 1000);
-    } catch (err: unknown) {
-      resultEl.textContent = `✗ ${err instanceof Error ? err.message : String(err)}`;
-      resultEl.className = 'save-result error';
-      resultEl.classList.remove('hidden');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = '保存';
-    }
-  });
 
   // --- 充值梯度 ---
   interface RechargeTier {
@@ -739,7 +825,8 @@ import AdminLayout from './layout.astro';
         btn.addEventListener('click', async () => {
           const el = btn as HTMLElement;
           const id = el.dataset.id!;
-          if (confirm('确定删除此充值梯度吗？')) {
+          const ok = await showConfirm('确认删除', '确定删除此充值梯度吗？此操作不可撤销。');
+          if (ok) {
             await fetch(`${SUPABASE_URL}/rest/v1/member_recharge_tiers?id=eq.${id}`, {
               method: 'DELETE',
               headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
@@ -758,88 +845,81 @@ import AdminLayout from './layout.astro';
   }
 
   function showTierForm(tier?: RechargeTier) {
-    const section = document.getElementById('tier-form-section')!;
-    const title = document.getElementById('tier-form-title')!;
-    section.classList.remove('hidden');
+    const titleText = tier ? '编辑充值梯度' : '添加充值梯度';
+    openModal(titleText, 'tier-form-template');
 
     if (tier) {
-      title.textContent = '编辑充值梯度';
       (document.getElementById('tier-id') as HTMLInputElement).value = tier.id;
       (document.getElementById('tier-amount') as HTMLInputElement).value = String(tier.amount);
       (document.getElementById('tier-bonus') as HTMLInputElement).value = String(tier.bonus);
       (document.getElementById('tier-sort') as HTMLInputElement).value = String(tier.sort_order);
-    } else {
-      title.textContent = '添加充值梯度';
-      (document.getElementById('tier-form') as HTMLFormElement).reset();
-      (document.getElementById('tier-id') as HTMLInputElement).value = '';
     }
-    section.scrollIntoView({ behavior: 'smooth' });
+
+    // Cancel button
+    document.getElementById('tier-cancel-btn')?.addEventListener('click', closeModal);
+
+    // Form submit
+    document.getElementById('tier-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = localStorage.getItem('taskora_admin_token');
+      if (!token) { window.location.href = '/admin-login'; return; }
+
+      const btn = document.getElementById('tier-save-btn') as HTMLButtonElement;
+      const resultEl = document.getElementById('tier-save-result')!;
+      btn.disabled = true;
+      btn.textContent = '保存中…';
+      resultEl.classList.add('hidden');
+
+      const id = (document.getElementById('tier-id') as HTMLInputElement).value;
+      const payload = {
+        amount: parseFloat((document.getElementById('tier-amount') as HTMLInputElement).value),
+        bonus: parseFloat((document.getElementById('tier-bonus') as HTMLInputElement).value || '0'),
+        sort_order: parseInt((document.getElementById('tier-sort') as HTMLInputElement).value || '0', 10),
+      };
+
+      try {
+        const url = id
+          ? `${SUPABASE_URL}/rest/v1/member_recharge_tiers?id=eq.${id}`
+          : `${SUPABASE_URL}/rest/v1/member_recharge_tiers`;
+        const method = id ? 'PATCH' : 'POST';
+
+        const res = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+        if (res.status === 401) { window.location.href = '/admin-login'; return; }
+        if (!res.ok) throw new Error(`保存失败 (${res.status})`);
+
+        await logOperation(token, id ? 'update_tier' : 'create_tier', `充值梯度: ¥${payload.amount}`, JSON.stringify(payload));
+        resultEl.textContent = '✓ 保存成功';
+        resultEl.className = 'save-result success';
+        resultEl.classList.remove('hidden');
+
+        await loadTiers(token);
+        setTimeout(() => {
+          closeModal();
+        }, 1000);
+      } catch (err: unknown) {
+        resultEl.textContent = `✗ ${err instanceof Error ? err.message : String(err)}`;
+        resultEl.className = 'save-result error';
+        resultEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '保存';
+      }
+    });
   }
 
   document.getElementById('add-tier-btn')?.addEventListener('click', () => showTierForm());
-  document.getElementById('tier-cancel-btn')?.addEventListener('click', () => {
-    document.getElementById('tier-form-section')!.classList.add('hidden');
-  });
-
-  document.getElementById('tier-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem('taskora_admin_token');
-    if (!token) { window.location.href = '/admin-login'; return; }
-
-    const btn = document.getElementById('tier-save-btn') as HTMLButtonElement;
-    const resultEl = document.getElementById('tier-save-result')!;
-    btn.disabled = true;
-    btn.textContent = '保存中…';
-    resultEl.classList.add('hidden');
-
-    const id = (document.getElementById('tier-id') as HTMLInputElement).value;
-    const payload = {
-      amount: parseFloat((document.getElementById('tier-amount') as HTMLInputElement).value),
-      bonus: parseFloat((document.getElementById('tier-bonus') as HTMLInputElement).value || '0'),
-      sort_order: parseInt((document.getElementById('tier-sort') as HTMLInputElement).value || '0', 10),
-    };
-
-    try {
-      const url = id
-        ? `${SUPABASE_URL}/rest/v1/member_recharge_tiers?id=eq.${id}`
-        : `${SUPABASE_URL}/rest/v1/member_recharge_tiers`;
-      const method = id ? 'PATCH' : 'POST';
-
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      if (res.status === 401) { window.location.href = '/admin-login'; return; }
-      if (!res.ok) throw new Error(`保存失败 (${res.status})`);
-
-      await logOperation(token, id ? 'update_tier' : 'create_tier', `充值梯度: ¥${payload.amount}`, JSON.stringify(payload));
-      resultEl.textContent = '✓ 保存成功';
-      resultEl.className = 'save-result success';
-      resultEl.classList.remove('hidden');
-
-      await loadTiers(token);
-      setTimeout(() => {
-        document.getElementById('tier-form-section')!.classList.add('hidden');
-      }, 1000);
-    } catch (err: unknown) {
-      resultEl.textContent = `✗ ${err instanceof Error ? err.message : String(err)}`;
-      resultEl.className = 'save-result error';
-      resultEl.classList.remove('hidden');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = '保存';
-    }
-  });
 
   // --- 操作日志 ---
   async function logOperation(token: string, action: string, detail: string, payload: string) {
     try {
-      // Fetch admin email from Supabase Auth
       let adminEmail: string | null = null;
       try {
         const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
@@ -938,6 +1018,13 @@ import AdminLayout from './layout.astro';
 </script>
 
 <style>
+  /* ====== Width fix: override StarlightPage splash content column ====== */
+  :global(.sl-content-wrapper),
+  :global(.hero) {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
   /* ====== Layout ====== */
   .members-header { margin-bottom: 1.5rem; }
 
@@ -969,7 +1056,6 @@ import AdminLayout from './layout.astro';
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    max-width: 640px;
   }
   .link-card {
     background: var(--sl-color-bg-nav);
@@ -1194,45 +1280,128 @@ import AdminLayout from './layout.astro';
   [data-theme='dark'] .status-expired { background: #1E293B; color: #94A3B8; }
   [data-theme='dark'] .status-cancelled { background: #450a0a; color: #FCA5A5; }
 
-  /* ====== Action Buttons ====== */
-  .edit-btn, .edit-discount-btn, .edit-tier-btn {
+  /* ====== Action Buttons (edit = blue, delete = red) ====== */
+  /* Use :global() because these buttons are injected via innerHTML in <script> and
+     won't have the Astro scoped data-astro-cid-* attribute at runtime. */
+  :global(.edit-btn), :global(.edit-discount-btn), :global(.edit-tier-btn) {
     display: inline-flex;
     align-items: center;
     padding: 0.3rem 0.75rem;
-    border: 1px solid var(--sl-color-gray-5);
+    border: 1.5px solid #3B82F6;
     border-radius: 6px;
     background: transparent;
-    color: var(--sl-color-accent);
+    color: #3B82F6;
     font-size: 0.78rem;
     font-weight: 500;
     cursor: pointer;
     margin-right: 0.25rem;
-    transition: border-color 0.12s ease, background-color 0.12s ease;
+    transition: background-color 0.12s ease;
     min-height: 30px;
     line-height: 1.4;
   }
-  .edit-btn:hover, .edit-discount-btn:hover, .edit-tier-btn:hover {
-    border-color: var(--sl-color-accent);
-    background: rgba(var(--sl-color-accent-rgb,79,70,229),0.06);
+  :global(.edit-btn:hover), :global(.edit-discount-btn:hover), :global(.edit-tier-btn:hover) {
+    background: rgba(59, 130, 246, 0.1);
   }
-  .delete-btn, .delete-discount-btn, .delete-tier-btn {
+  :global(.delete-btn), :global(.delete-discount-btn), :global(.delete-tier-btn) {
     display: inline-flex;
     align-items: center;
     padding: 0.3rem 0.75rem;
-    border: 1px solid var(--sl-color-gray-5);
+    border: 1.5px solid #EF4444;
     border-radius: 6px;
     background: transparent;
-    color: #D13B3B;
+    color: #EF4444;
     font-size: 0.78rem;
     font-weight: 500;
     cursor: pointer;
-    transition: border-color 0.12s ease, background-color 0.12s ease;
+    transition: background-color 0.12s ease, color 0.12s ease;
     min-height: 30px;
     line-height: 1.4;
   }
-  .delete-btn:hover, .delete-discount-btn:hover, .delete-tier-btn:hover {
-    border-color: #D13B3B;
-    background: rgba(209,59,59,0.06);
+  :global(.delete-btn:hover), :global(.delete-discount-btn:hover), :global(.delete-tier-btn:hover) {
+    background: #EF4444;
+    color: #fff;
+  }
+
+  /* ====== Modal overlay ====== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .modal-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 580px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    position: relative;
+  }
+  [data-theme='dark'] .modal-card {
+    background: var(--sl-color-bg-nav);
+  }
+  .confirm-card {
+    max-width: 400px;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+  .modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--sl-color-text);
+  }
+  .modal-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--sl-color-gray-2);
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    line-height: 1;
+    transition: background-color 0.12s ease, color 0.12s ease;
+  }
+  .modal-close-btn:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--sl-color-text);
+  }
+  .modal-body {
+    /* content area */
+  }
+  .confirm-message {
+    font-size: 0.9rem;
+    color: var(--sl-color-text);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .delete-confirm-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    background: #EF4444;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 42px;
+    transition: background-color 0.15s ease;
+  }
+  .delete-confirm-btn:hover {
+    background: #DC2626;
   }
 
   /* ====== Misc ====== */
@@ -1244,7 +1413,7 @@ import AdminLayout from './layout.astro';
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .hidden { display: none; }
+  .hidden { display: none !important; }
   .config-textarea {
     font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
     font-size: 0.82rem;
@@ -1263,12 +1432,15 @@ import AdminLayout from './layout.astro';
   [data-theme='dark'] .cancel-btn {
     border-color: var(--sl-color-gray-4);
   }
+  [data-theme='dark'] .modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
 
   /* ====== Responsive ====== */
   @media (max-width: 768px) {
-    .links-form { max-width: 100%; }
     .orders-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .form-actions { flex-direction: column; align-items: stretch; }
-    .save-btn, .cancel-btn { width: 100%; justify-content: center; }
+    .save-btn, .cancel-btn, .delete-confirm-btn { width: 100%; justify-content: center; }
+    .modal-card { padding: 1.25rem; }
   }
 </style>
