@@ -106,11 +106,7 @@ import AdminLayout from './layout.astro';
       `${SUPABASE_URL}/rest/v1/app_config?key=in.(alipay_app_id,alipay_private_key,alipay_public_key)&select=key,value`,
       { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` } }
     );
-    if (res.status === 401) {
-      localStorage.removeItem('taskora_admin_token');
-      window.location.href = '/admin-login';
-      return;
-    }
+    if (!res.ok) return;
     const rows: { key: string; value: string }[] = await res.json();
     const cfg: Record<string, string> = {};
     for (const r of rows) cfg[r.key] = r.value;
@@ -237,11 +233,6 @@ import AdminLayout from './layout.astro';
         },
       });
 
-      if (res.status === 401) {
-        localStorage.removeItem('taskora_admin_token');
-        window.location.href = '/admin-login';
-        return;
-      }
       if (!res.ok) throw new Error(`请求失败 (${res.status})`);
 
       const orders: { out_trade_no: string; plan: string; amount: string; status: string; created_at: string; paid_at: string | null }[] = await res.json();
@@ -298,11 +289,6 @@ import AdminLayout from './layout.astro';
       const res = await fetch('/api/admin/whitelist', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
-      if (res.status === 401) {
-        localStorage.removeItem('taskora_admin_token');
-        window.location.href = '/admin-login';
-        return;
-      }
       if (!res.ok) throw new Error(`请求失败 (${res.status})`);
 
       const list: { email: string; note: string | null; created_at: string }[] = await res.json();
