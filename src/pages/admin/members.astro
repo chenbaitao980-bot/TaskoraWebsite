@@ -1236,7 +1236,7 @@ import AdminLayout from './layout.astro';
 
   /* ====== Tables ====== */
   .orders-table {
-    width: 100%;
+    width: auto;
     border-collapse: separate;
     border-spacing: 0;
     font-size: 0.85rem;
@@ -1244,50 +1244,15 @@ import AdminLayout from './layout.astro';
     border-radius: 12px;
     border: 1px solid var(--sl-color-gray-5);
     overflow: hidden;
-    table-layout: fixed;
   }
-  /* Member types (5 cols) */
-  .types-table th:first-child,
-  .types-table td:first-child { width: 25%; }
-  .types-table th:nth-child(2),
-  .types-table td:nth-child(2) { width: 12%; }
-  .types-table th:nth-child(3),
-  .types-table td:nth-child(3) { width: 15%; }
-  .types-table th:nth-child(4),
-  .types-table td:nth-child(4) { width: 13%; }
-  .types-table th:nth-child(5),
-  .types-table td:nth-child(5) { width: 35%; }
-  /* Discount codes (6 cols) */
-  #discounts-table-wrap .orders-table th:nth-child(1),
-  #discounts-table-wrap .orders-table td:nth-child(1) { width: 18%; }
-  #discounts-table-wrap .orders-table th:nth-child(2),
-  #discounts-table-wrap .orders-table td:nth-child(2) { width: 22%; }
-  #discounts-table-wrap .orders-table th:nth-child(3),
-  #discounts-table-wrap .orders-table td:nth-child(3) { width: 15%; }
-  #discounts-table-wrap .orders-table th:nth-child(4),
-  #discounts-table-wrap .orders-table td:nth-child(4) { width: 10%; }
-  #discounts-table-wrap .orders-table th:nth-child(5),
-  #discounts-table-wrap .orders-table td:nth-child(5) { width: 10%; }
-  #discounts-table-wrap .orders-table th:nth-child(6),
-  #discounts-table-wrap .orders-table td:nth-child(6) { width: 25%; }
-  /* Recharge tiers (4 cols) */
-  #tiers-table-wrap .orders-table th:nth-child(1),
-  #tiers-table-wrap .orders-table td:nth-child(1) { width: 30%; }
-  #tiers-table-wrap .orders-table th:nth-child(2),
-  #tiers-table-wrap .orders-table td:nth-child(2) { width: 30%; }
-  #tiers-table-wrap .orders-table th:nth-child(3),
-  #tiers-table-wrap .orders-table td:nth-child(3) { width: 15%; }
-  #tiers-table-wrap .orders-table th:nth-child(4),
-  #tiers-table-wrap .orders-table td:nth-child(4) { width: 25%; }
-  /* Operation logs (4 cols) */
-  #logs-table-wrap .orders-table th:nth-child(1),
-  #logs-table-wrap .orders-table td:nth-child(1) { width: 20%; }
-  #logs-table-wrap .orders-table th:nth-child(2),
-  #logs-table-wrap .orders-table td:nth-child(2) { width: 25%; }
-  #logs-table-wrap .orders-table th:nth-child(3),
-  #logs-table-wrap .orders-table td:nth-child(3) { width: 15%; }
-  #logs-table-wrap .orders-table th:nth-child(4),
-  #logs-table-wrap .orders-table td:nth-child(4) { width: 40%; }
+  /* Constrain table wrap so tables don't overstretch on wide screens */
+  #types-table-wrap,
+  #discounts-table-wrap,
+  #tiers-table-wrap,
+  #logs-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+  }
   .orders-table th {
     text-align: left;
     padding: 0.625rem 0.875rem;
