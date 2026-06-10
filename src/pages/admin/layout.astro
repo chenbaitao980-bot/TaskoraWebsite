@@ -115,26 +115,26 @@ const navItems = [
     :global(.right-sidebar-container) {
       display: none !important;
     }
-    /* Neutralize hero grid (7fr 4fr at 50rem+) */
-    :global(.hero) {
+    /* Neutralize hero grid (7fr 4fr at 50rem+) — only inside admin layout */
+    .admin-layout :global(.hero) {
       display: block !important;
       padding-block: 1rem !important;
     }
     /* Unconstrain all hero children — Starlight may wrap content in .stack > .copy
        with max-width limits even after .hero is display:block */
-    :global(.hero > *) {
+    .admin-layout :global(.hero > *) {
       max-width: none !important;
       width: 100% !important;
     }
-    :global(.hero .stack) {
+    .admin-layout :global(.hero .stack) {
       max-width: none !important;
       width: 100% !important;
     }
-    :global(.hero .copy) {
+    .admin-layout :global(.hero .copy) {
       max-width: none !important;
       width: 100% !important;
     }
-    :global(.hero-html) {
+    .admin-layout :global(.hero-html) {
       max-width: none !important;
       width: 100% !important;
     }
