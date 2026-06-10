@@ -59,6 +59,8 @@ Two independent paths:
 1. **Vercel** — `vercel.json` defines `npm run build` → `dist/`. `deploy.bat` pushes to `pbtcbt/TaskoraWebsite` which auto-deploys.
 2. **GitHub Pages** — `.github/workflows/deploy.yml` builds and deploys via `actions/deploy-pages`.
 
+**Convention**: After every code change, commit and `git push` so Vercel picks up the deployment automatically.
+
 ## Supabase (admin/download pages)
 
 - Project URL: `https://wlehkvsxftyxmxelcaps.supabase.co`
