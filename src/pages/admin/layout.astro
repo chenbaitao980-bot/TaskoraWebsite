@@ -120,6 +120,28 @@ const navItems = [
       display: block !important;
       padding-block: 1rem !important;
     }
+    /* Unconstrain all hero children — Starlight may wrap content in .stack > .copy
+       with max-width limits even after .hero is display:block */
+    :global(.hero > *) {
+      max-width: none !important;
+      width: 100% !important;
+    }
+    :global(.hero .stack) {
+      max-width: none !important;
+      width: 100% !important;
+    }
+    :global(.hero .copy) {
+      max-width: none !important;
+      width: 100% !important;
+    }
+    :global(.hero-html) {
+      max-width: none !important;
+      width: 100% !important;
+    }
+    /* Ensure sl-markdown-content children aren't constrained */
+    :global(.sl-markdown-content > *) {
+      max-width: none !important;
+    }
 
     .status-msg {
       color: var(--sl-color-gray-2);

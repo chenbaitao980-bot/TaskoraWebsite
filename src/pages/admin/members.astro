@@ -28,7 +28,7 @@ import AdminLayout from './layout.astro';
     </table>
   </div>
   <div id="types-empty" class="orders-empty hidden">暂无会员类型</div>
-  <button id="add-type-btn" class="save-btn" style="margin-top: 1rem;">+ 添加会员类型</button>
+  <button id="add-type-btn" class="add-section-btn" style="margin-top: 1rem;">+ 添加会员类型</button>
 
   <hr class="section-divider" />
 
@@ -54,7 +54,7 @@ import AdminLayout from './layout.astro';
     </table>
   </div>
   <div id="discounts-empty" class="orders-empty hidden">暂无折扣码</div>
-  <button id="add-discount-btn" class="save-btn" style="margin-top: 1rem;">+ 添加折扣码</button>
+  <button id="add-discount-btn" class="add-section-btn" style="margin-top: 1rem;">+ 添加折扣码</button>
 
   <hr class="section-divider" />
 
@@ -75,7 +75,7 @@ import AdminLayout from './layout.astro';
     </table>
   </div>
   <div id="tiers-empty" class="orders-empty hidden">暂无充值梯度</div>
-  <button id="add-tier-btn" class="save-btn" style="margin-top: 1rem;">+ 添加充值梯度</button>
+  <button id="add-tier-btn" class="add-section-btn" style="margin-top: 1rem;">+ 添加充值梯度</button>
 
   <hr class="section-divider" />
 
@@ -1154,6 +1154,32 @@ import AdminLayout from './layout.astro';
     transform: scale(0.98);
   }
   .save-btn:disabled { opacity: 0.55; cursor: default; }
+  /* Softer outlined variant for section-level add actions */
+  .add-section-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem 1.5rem;
+    border: 1.5px solid var(--sl-color-accent);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--sl-color-accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.01em;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    min-height: 38px;
+    gap: 0.4rem;
+  }
+  .add-section-btn:hover {
+    background: var(--sl-color-accent);
+    color: #fff;
+  }
+  :global([data-theme='dark']) .add-section-btn:hover {
+    background: var(--sl-color-accent-high);
+    border-color: var(--sl-color-accent-high);
+  }
   .cancel-btn {
     display: inline-flex;
     align-items: center;
@@ -1273,36 +1299,36 @@ import AdminLayout from './layout.astro';
   [data-theme='dark'] .status-expired { background: #1E293B; color: #94A3B8; }
   [data-theme='dark'] .status-cancelled { background: #450a0a; color: #FCA5A5; }
 
-  /* ====== Action Buttons (edit = blue, delete = red) ====== */
+  /* ====== Action Buttons (edit = warm coral, delete = brick red) ====== */
   /* Use :global() because these buttons are injected via innerHTML in <script> and
      won't have the Astro scoped data-astro-cid-* attribute at runtime. */
   :global(.edit-btn), :global(.edit-discount-btn), :global(.edit-tier-btn) {
     display: inline-flex;
     align-items: center;
     padding: 0.3rem 0.75rem;
-    border: 1.5px solid #3B82F6;
+    border: none;
     border-radius: 6px;
-    background: transparent;
-    color: #3B82F6;
+    background: var(--sl-color-accent);
+    color: #fff;
     font-size: 0.78rem;
     font-weight: 500;
     cursor: pointer;
     margin-right: 0.25rem;
-    transition: background-color 0.12s ease;
+    transition: filter 0.12s ease;
     min-height: 30px;
     line-height: 1.4;
   }
   :global(.edit-btn:hover), :global(.edit-discount-btn:hover), :global(.edit-tier-btn:hover) {
-    background: rgba(59, 130, 246, 0.1);
+    filter: brightness(1.08);
   }
   :global(.delete-btn), :global(.delete-discount-btn), :global(.delete-tier-btn) {
     display: inline-flex;
     align-items: center;
     padding: 0.3rem 0.75rem;
-    border: 1.5px solid #EF4444;
+    border: 1.5px solid #D13B3B;
     border-radius: 6px;
     background: transparent;
-    color: #EF4444;
+    color: #D13B3B;
     font-size: 0.78rem;
     font-weight: 500;
     cursor: pointer;
@@ -1311,7 +1337,7 @@ import AdminLayout from './layout.astro';
     line-height: 1.4;
   }
   :global(.delete-btn:hover), :global(.delete-discount-btn:hover), :global(.delete-tier-btn:hover) {
-    background: #EF4444;
+    background: #D13B3B;
     color: #fff;
   }
 
@@ -1385,7 +1411,7 @@ import AdminLayout from './layout.astro';
     padding: 0.65rem 1.5rem;
     border: none;
     border-radius: 8px;
-    background: #EF4444;
+    background: #D13B3B;
     color: #fff;
     font-size: 0.9rem;
     font-weight: 600;
@@ -1394,7 +1420,7 @@ import AdminLayout from './layout.astro';
     transition: background-color 0.15s ease;
   }
   .delete-confirm-btn:hover {
-    background: #DC2626;
+    background: #B51E1E;
   }
 
   /* ====== Misc ====== */
