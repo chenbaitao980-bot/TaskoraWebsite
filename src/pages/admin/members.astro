@@ -1236,7 +1236,8 @@ import AdminLayout from './layout.astro';
 
   /* ====== Tables ====== */
   .orders-table {
-    width: auto;
+    width: fit-content;
+    max-width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     font-size: 0.85rem;
@@ -1244,14 +1245,6 @@ import AdminLayout from './layout.astro';
     border-radius: 12px;
     border: 1px solid var(--sl-color-gray-5);
     overflow: hidden;
-  }
-  /* Constrain table wrap so tables don't overstretch on wide screens */
-  #types-table-wrap,
-  #discounts-table-wrap,
-  #tiers-table-wrap,
-  #logs-table-wrap {
-    max-width: 100%;
-    overflow-x: auto;
   }
   .orders-table th {
     text-align: left;
