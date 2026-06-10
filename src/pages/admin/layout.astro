@@ -110,6 +110,11 @@ const navItems = [
     :global(.main-pane) {
       width: 100% !important;
     }
+    /* Hide Starlight's right sidebar container (table of contents panel)
+       which occupies flex space and creates an empty white box */
+    :global(.right-sidebar-container) {
+      display: none !important;
+    }
     /* Neutralize hero grid (7fr 4fr at 50rem+) */
     :global(.hero) {
       display: block !important;
