@@ -1237,6 +1237,7 @@ import AdminLayout from './layout.astro';
   /* ====== Tables ====== */
   .orders-table {
     width: 100%;
+    min-width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     font-size: 0.85rem;
@@ -1244,7 +1245,18 @@ import AdminLayout from './layout.astro';
     border-radius: 12px;
     border: 1px solid var(--sl-color-gray-5);
     overflow: hidden;
+    table-layout: fixed;
   }
+  .types-table th:first-child,
+  .types-table td:first-child { width: 25%; }
+  .types-table th:nth-child(2),
+  .types-table td:nth-child(2) { width: 15%; }
+  .types-table th:nth-child(3),
+  .types-table td:nth-child(3) { width: 15%; }
+  .types-table th:nth-child(4),
+  .types-table td:nth-child(4) { width: 15%; }
+  .types-table th:nth-child(5),
+  .types-table td:nth-child(5) { width: 30%; }
   .orders-table th {
     text-align: left;
     padding: 0.625rem 0.875rem;
