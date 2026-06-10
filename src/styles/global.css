@@ -33,3 +33,43 @@
   --sl-color-accent: #D47A5A;
   --sl-color-accent-high: #E8B89D;
 }
+
+/* ===== Homepage Hero Layout Fix =====
+ * Starlight 默认在 50rem 才切换到双列 hero；对桌面端来说太晚。
+ * 这里提前到 40rem，并给 logo 加圆角/阴影让视觉更精致。
+ */
+.hero > img,
+.hero > .hero-html {
+  border-radius: 24px;
+  box-shadow: 0 12px 48px rgba(193, 95, 60, 0.18);
+  width: min(70%, 16rem);
+  margin-inline: auto;
+}
+
+@media (min-width: 40rem) {
+  .hero {
+    display: grid;
+    grid-template-columns: 7fr 4fr;
+    gap: 3%;
+    padding-block: clamp(2rem, calc(1rem + 8vmin), 7rem);
+  }
+
+  .hero > img,
+  .hero > .hero-html {
+    order: 2;
+    width: min(100%, 18rem);
+    margin-inline: 0;
+  }
+
+  .hero .stack {
+    text-align: start;
+  }
+
+  .hero .copy {
+    align-items: flex-start;
+  }
+
+  .hero .actions {
+    justify-content: flex-start;
+  }
+}
