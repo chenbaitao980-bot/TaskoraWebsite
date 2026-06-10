@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 2
-- **Last Active**: 2026-06-07
+- **Total Sessions**: 3
+- **Last Active**: 2026-06-10
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~81 | Active |
+| `journal-1.md` | ~115 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 3 | 2026-06-10 | 修复admin会员页面表格右侧留白 | `0bfd8c5`, `2c14b0b` | `main` |
 | 2 | 2026-06-07 | Admin file upload via Supabase Edge Function | `36b896c`, `fd1e0a4`, `66b03b6`, `2fa613f`, `f855607`, `3f48439` | `main` |
 | 1 | 2026-06-07 | 下载链接管理后台 + 修复下载页面 | `06656f0`, `63de013`, `acfd788`, `4073c1e` | `main` |
 <!-- @@@/auto:session-history -->

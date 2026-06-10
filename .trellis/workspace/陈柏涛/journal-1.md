@@ -79,3 +79,37 @@ Implemented admin drag-and-drop file upload for APK/ZIP. Tried GitHub Releases d
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: 修复admin会员页面表格右侧留白
+
+**Date**: 2026-06-10
+**Task**: 修复admin会员页面表格右侧留白
+**Branch**: `main`
+
+### Summary
+
+发现CSS table的width:auto/fit-content无法收缩表格宽度，根本原因是admin-main的flex:1撑满。参考payment.astro的正确做法：给表格外层加max-width约束。更新spec记录此布局约定。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0bfd8c5` | (see git log) |
+| `2c14b0b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
